@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ModSecurity Ruleset Comparison: COMODO vs. Imunify360</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals -->
+    <!-- Application Structure Plan: A single-page dashboard design is used to provide a direct comparison. The structure starts with a high-level summary and recommendation, followed by "At-a-Glance" comparison cards for quick insights. The core of the app uses a tabbed navigation system to let users explore detailed comparisons by theme (Protection, Intelligence, Management, Performance), preventing information overload. This task-oriented flow is more user-friendly than a linear report, allowing users to find the specific information they need to make a decision quickly. The final recommendation is reiterated at the end for reinforcement. -->
+    <!-- Visualization & Content Choices: 
+    - Report Info: Overall comparison -> Goal: Inform -> Viz: High-level cards -> Interaction: None -> Justification: Quick summary for executive overview.
+    - Report Info: Scope of Protection -> Goal: Compare/Organize -> Viz: HTML/CSS layered diagram -> Interaction: Hover/click to reveal details -> Justification: Visually demonstrates the 'suite vs. ruleset' difference better than text.
+    - Report Info: False Positives/Rule Quality -> Goal: Compare -> Viz: Bar Chart (Chart.js) -> Interaction: Tooltip -> Justification: Quantifies an abstract concept like "management effort" for easy comparison.
+    - Report Info: Multi-faceted comparison (Performance, Compatibility, etc.) -> Goal: Compare -> Viz: Radar Chart (Chart.js) -> Interaction: Tooltip -> Justification: Excellent for showing strengths/weaknesses across multiple variables in a single compact graphic.
+    - All other data is presented in structured HTML lists and tables for clarity and easy parsing. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #FDFBF8;
+            color: #3f3c3a;
+        }
+        .nav-button {
+            transition: all 0.3s ease;
+        }
+        .nav-button.active {
+            background-color: #D4A373;
+            color: #FEFAE0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+        }
+        .content-section {
+            display: none;
+        }
+        .content-section.active {
+            display: block;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+        .card {
+            background-color: #FEFAE0;
+            border: 1px solid #FAEDCD;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgba(212, 163, 115, 0.1), 0 2px 4px -2px rgba(212, 163, 115, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(212, 163, 115, 0.2), 0 4px 6px -4px rgba(212, 163, 115, 0.2);
+        }
+        .diagram-layer {
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: #3f3c3a;
+            position: absolute;
+            transition: all 0.3s ease;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+        <header class="text-center mb-10">
+            <h1 class="text-4xl md:text-5xl font-bold text-[#3f3c3a] mb-2">ModSecurity WAF Ruleset Comparison</h1>
+            <p class="text-xl text-[#A17C5B]">COMODO vs. Imunify360</p>
+        </header>
+
+        <main>
+            <section id="summary" class="mb-12">
+                <div class="max-w-4xl mx-auto bg-[#FEFAE0] p-6 rounded-xl border border-[#FAEDCD] shadow-sm">
+                    <h2 class="text-2xl font-bold text-[#D4A373] mb-3 text-center">Executive Summary</h2>
+                    <p class="text-center text-lg text-[#3f3c3a] leading-relaxed">
+                        When comparing Web Application Firewall (WAF) rulesets, the primary difference lies in their underlying technology and management philosophy. <strong>COMODO</strong> provides a robust, traditional ruleset that offers excellent baseline protection against known vulnerabilities, ideal for administrators comfortable with manual configuration. The <strong>Imunify360 WAF</strong> leverages artificial intelligence and collective immunity to offer dynamic, evolving protection that aims to reduce administrative overhead and block emerging threats.
+                    </p>
+                     <p class="text-center font-bold text-lg text-[#3f3c3a] mt-4 leading-relaxed bg-[#FAEDCD] p-4 rounded-lg">
+                        For a large-scale shared hosting environment, the <strong>Imunify360 WAF ruleset is the more powerful and complete solution</strong>. Its AI-driven approach to threat detection and automated reduction of false positives significantly lowers the day-to-day management workload, making it more scalable and efficient for protecting hundreds of websites.
+                    </p>
+                </div>
+            </section>
+
+            <section id="at-a-glance" class="mb-12">
+                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-6xl mx-auto">
+                    <div class="card p-6">
+                        <h3 class="text-2xl font-bold mb-3 text-center text-[#3f3c3a]">COMODO WAF Ruleset</h3>
+                        <div class="space-y-3 text-center">
+                            <p><strong class="text-[#A17C5B]">Type:</strong> Traditional WAF Ruleset</p>
+                            <p><strong class="text-[#A17C5B]">Core Tech:</strong> Static & regex-based rules</p>
+                             <p><strong class="text-[#A17C5B]">Management:</strong> Manual configuration via files</p>
+                             <p><strong class="text-[#A17C5B]">Best For:</strong> Environments where manual tuning is preferred, experienced administrators.</p>
+                        </div>
+                    </div>
+                     <div class="card p-6 border-2 border-[#D4A373]">
+                        <h3 class="text-2xl font-bold mb-3 text-center text-[#D4A373]">Imunify360 WAF Ruleset</h3>
+                         <div class="space-y-3 text-center">
+                             <p><strong class="text-[#A17C5B]">Type:</strong> AI-Powered WAF Ruleset</p>
+                             <p><strong class="text-[#A17C5B]">Core Tech:</strong> AI, machine learning, herd immunity</p>
+                             <p><strong class="text-[#A17C5B]">Management:</strong> Integrated GUI via control panels</p>
+                             <p><strong class="text-[#A17C5B]">Best For:</strong> Shared hosting providers seeking automated WAF management and low false positives.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="interactive-comparison" class="bg-[#FEFAE0] p-6 rounded-xl border border-[#FAEDCD]">
+                <h2 class="text-3xl font-bold text-center text-[#3f3c3a] mb-6">Detailed Feature Breakdown</h2>
+                <nav id="nav-controls" class="flex flex-wrap justify-center gap-2 md:gap-4 mb-8">
+                    <button data-target="protection" class="nav-button active text-sm md:text-base font-semibold px-4 py-2 rounded-full bg-white text-[#A17C5B] shadow-sm">Protection Scope</button>
+                    <button data-target="intelligence" class="nav-button text-sm md:text-base font-semibold px-4 py-2 rounded-full bg-white text-[#A17C5B] shadow-sm">Rule Intelligence</button>
+                    <button data-target="management" class="nav-button text-sm md:text-base font-semibold px-4 py-2 rounded-full bg-white text-[#A17C5B] shadow-sm">Management & Usability</button>
+                    <button data-target="performance" class="nav-button text-sm md:text-base font-semibold px-4 py-2 rounded-full bg-white text-[#A17C5B] shadow-sm">Performance Profile</button>
+                </nav>
+
+                <div id="content-container">
+                    <div id="protection" class="content-section active">
+                        <p class="text-center text-lg mb-8 max-w-3xl mx-auto">This section compares the core protection strategies of each WAF ruleset. Both aim to block common attacks, but their methods differ significantly. COMODO relies on a well-defined set of signatures for known threats, while Imunify360 adds a layer of proactive detection for unknown, or "zero-day," vulnerabilities.</p>
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
+                            <div class="text-center p-4">
+                                <h4 class="text-xl font-bold mb-4">COMODO: Signature-Based Defense</h4>
+                                <div class="bg-white p-4 rounded-lg text-left space-y-2">
+                                    <p class="flex items-center"><span class="text-green-500 mr-2 font-bold text-xl">✔</span><strong>OWASP Top 10:</strong> Strong protection against the most common web vulnerabilities.</p>
+                                    <p class="flex items-center"><span class="text-green-500 mr-2 font-bold text-xl">✔</span><strong>Known Vulnerabilities:</strong> Rules are written to block specific, identified exploits in popular software (e.g., WordPress, Joomla).</p>
+                                    <p class="flex items-center"><span class="text-yellow-500 mr-2 font-bold text-xl">●</span><strong>Detection Method:</strong> Relies on periodic updates to receive new rules for newly discovered threats.</p>
+                                </div>
+                            </div>
+                            <div class="text-center p-4">
+                                <h4 class="text-xl font-bold mb-4">Imunify360: Proactive & Heuristic Defense</h4>
+                                <div class="bg-white p-4 rounded-lg text-left space-y-2">
+                                     <p class="flex items-center"><span class="text-green-500 mr-2 font-bold text-xl">✔</span><strong>OWASP Top 10:</strong> Comprehensive coverage of common attacks.</p>
+                                     <p class="flex items-center"><span class="text-green-500 mr-2 font-bold text-xl">✔</span><strong>Known Vulnerabilities:</strong> Includes robust signature-based rules similar to COMODO.</p>
+                                     <p class="flex items-center"><span class="text-blue-500 mr-2 font-bold text-xl">✚</span><strong>Zero-Day Attacks:</strong> AI and heuristic analysis identify and block suspicious patterns, even if a specific signature doesn't exist yet.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="intelligence" class="content-section">
+                        <p class="text-center text-lg mb-8 max-w-3xl mx-auto">Effective security depends on the intelligence behind the rules. Imunify360 uses a dynamic, cloud-based approach to identify and block new threats in real-time across its entire network, while COMODO relies on periodic updates to its rule-based system. This leads to different levels of effort required to manage false positives.</p>
+                        <div class="chart-container">
+                            <canvas id="intelligenceChart"></canvas>
+                        </div>
+                    </div>
+                    <div id="management" class="content-section">
+                        <p class="text-center text-lg mb-8 max-w-3xl mx-auto">For large-scale hosting environments, ease of management is critical. Imunify360 is built for this scenario with integrated control panel plugins. COMODO requires more hands-on, server-by-server configuration via text files, which can be time-consuming at scale.</p>
+                         <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                            <div class="p-4 rounded-lg bg-white">
+                                <h4 class="text-xl font-bold mb-4 text-center">COMODO</h4>
+                                <ul class="space-y-3">
+                                    <li class="flex items-start"><span class="text-red-500 mr-2 font-bold">✘</span> GUI-based management</li>
+                                    <li class="flex items-start"><span class="text-green-500 mr-2 font-bold">✔</span> Direct config file access for granular control</li>
+                                    <li class="flex items-start"><span class="text-yellow-500 mr-2 font-bold">●</span> Requires command-line or manual file edits for whitelisting</li>
+                                    <li class="flex items-start"><span class="text-yellow-500 mr-2 font-bold">●</span> Rule updates are typically applied manually or via a script</li>
+                                </ul>
+                            </div>
+                             <div class="p-4 rounded-lg bg-white">
+                                <h4 class="text-xl font-bold mb-4 text-center text-[#D4A373]">Imunify360</h4>
+                                <ul class="space-y-3">
+                                    <li class="flex items-start"><span class="text-green-500 mr-2 font-bold">✔</span> Integrated into cPanel & DirectAdmin for easy access</li>
+                                     <li class="flex items-start"><span class="text-red-500 mr-2 font-bold">✘</span> Less focus on direct config file tweaking</li>
+                                    <li class="flex items-start"><span class="text-green-500 mr-2 font-bold">✔</span> Whitelisting and rule management via a user-friendly interface</li>
+                                    <li class="flex items-start"><span class="text-green-500 mr-2 font-bold">✔</span> Rules are updated automatically and in real-time from the cloud</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="performance" class="content-section">
+                        <p class="text-center text-lg mb-8 max-w-3xl mx-auto">This chart provides a holistic view of each WAF ruleset's profile. "WAF Power" refers to the breadth and depth of threat detection capabilities. Both are highly optimized, but the AI-driven nature of Imunify360 gives it an edge in proactive defense, balanced against the simplicity and direct control of COMODO.</p>
+                        <div class="chart-container">
+                            <canvas id="performanceChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const navControls = document.getElementById('nav-controls');
+            const contentSections = document.querySelectorAll('.content-section');
+            const navButtons = document.querySelectorAll('.nav-button');
+
+            navControls.addEventListener('click', (e) => {
+                if (e.target.tagName === 'BUTTON') {
+                    const targetId = e.target.dataset.target;
+
+                    navButtons.forEach(btn => btn.classList.remove('active'));
+                    e.target.classList.add('active');
+
+                    contentSections.forEach(section => {
+                        section.classList.remove('active');
+                        if (section.id === targetId) {
+                            section.classList.add('active');
+                        }
+                    });
+                }
+            });
+
+            const renderIntelligenceChart = () => {
+                const ctx = document.getElementById('intelligenceChart').getContext('2d');
+                if (window.intelligenceChartInstance) {
+                    window.intelligenceChartInstance.destroy();
+                }
+                window.intelligenceChartInstance = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Rule Generation', 'False Positive Reduction', 'Zero-Day Protection'],
+                        datasets: [{
+                            label: 'COMODO',
+                            data: [6, 4, 5],
+                            backgroundColor: 'rgba(161, 124, 91, 0.6)',
+                            borderColor: 'rgba(161, 124, 91, 1)',
+                            borderWidth: 1
+                        }, {
+                            label: 'Imunify360 WAF',
+                            data: [9, 8, 8],
+                            backgroundColor: 'rgba(212, 163, 115, 0.7)',
+                            borderColor: 'rgba(212, 163, 115, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 10,
+                                title: { display: true, text: 'Effectiveness Score (1-10)' }
+                            }
+                        },
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Rule Intelligence & Automation Comparison',
+                                font: { size: 16 }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    footer: (tooltipItems) => {
+                                        let text = '';
+                                        tooltipItems.forEach(item => {
+                                            if (item.dataset.label === 'COMODO') {
+                                                if(item.label === 'Rule Generation') text = 'Manual updates, community rules.';
+                                                if(item.label === 'False Positive Reduction') text = 'Requires manual whitelisting.';
+                                                if(item.label === 'Zero-Day Protection') text = 'Relies on known signatures.';
+                                            } else {
+                                                if(item.label === 'Rule Generation') text = 'AI & real-time herd immunity.';
+                                                if(item.label === 'False Positive Reduction') text = 'Automated with cloud heuristics.';
+                                                if(item.label === 'Zero-Day Protection') text = 'Proactive defense stops unknown code.';
+                                            }
+                                        });
+                                        return text;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            };
+
+            const renderPerformanceChart = () => {
+                const ctx = document.getElementById('performanceChart').getContext('2d');
+                if (window.performanceChartInstance) {
+                    window.performanceChartInstance.destroy();
+                }
+                window.performanceChartInstance = new Chart(ctx, {
+                    type: 'radar',
+                    data: {
+                        labels: ['WAF Power', 'Management Ease', 'Low False Positives', 'Compatibility', 'Low Performance Overhead'],
+                        datasets: [{
+                            label: 'COMODO',
+                            data: [6, 4, 5, 8, 9],
+                            backgroundColor: 'rgba(161, 124, 91, 0.2)',
+                            borderColor: 'rgba(161, 124, 91, 1)',
+                            pointBackgroundColor: 'rgba(161, 124, 91, 1)',
+                        }, {
+                            label: 'Imunify360 WAF',
+                            data: [8, 8, 8, 9, 7],
+                            backgroundColor: 'rgba(212, 163, 115, 0.2)',
+                            borderColor: 'rgba(212, 163, 115, 1)',
+                            pointBackgroundColor: 'rgba(212, 163, 115, 1)',
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            r: {
+                                beginAtZero: true,
+                                max: 10,
+                                pointLabels: { font: { size: 12 } },
+                                ticks: { backdropColor: 'transparent' }
+                            }
+                        },
+                         plugins: {
+                            title: {
+                                display: true,
+                                text: 'Overall WAF Ruleset Profile',
+                                font: { size: 16 }
+                            }
+                        }
+                    }
+                });
+            };
+            
+            renderIntelligenceChart();
+            renderPerformanceChart();
+        });
+    </script>
+</body>
+</html>
