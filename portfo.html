@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Project Portfolio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc; /* A very light gray, almost white */
+        }
+        .hero-pattern {
+            background-image: radial-gradient(#dbeafe 1px, transparent 1px);
+            background-size: 16px 16px;
+        }
+        .card-hover-effect {
+            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+        }
+        .card-hover-effect:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+        }
+        .fade-in-up {
+            animation: fadeInUp 0.8s ease-out forwards;
+            opacity: 0;
+        }
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        /* Staggered animation delays */
+        .delay-100 { animation-delay: 0.1s; }
+        .delay-200 { animation-delay: 0.2s; }
+        .delay-300 { animation-delay: 0.3s; }
+        .delay-400 { animation-delay: 0.4s; }
+        .delay-500 { animation-delay: 0.5s; }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <!-- Header Navigation -->
+    <header class="bg-white/80 backdrop-blur-lg fixed top-0 left-0 right-0 z-50 border-b border-gray-200">
+        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <a href="#" class="text-2xl font-bold text-blue-600">Your Name</a>
+            <nav class="hidden md:flex space-x-8 items-center">
+                <a href="#projects" class="text-gray-600 hover:text-blue-600 transition-colors">Projects</a>
+                <a href="#about" class="text-gray-600 hover:text-blue-600 transition-colors">About</a>
+                <a href="#contact" class="text-gray-600 hover:text-blue-600 transition-colors">Contact</a>
+                <a href="https://github.com/YOUR_USERNAME" target="_blank" class="bg-gray-800 text-white px-4 py-2 rounded-lg hover:bg-gray-900 transition-colors flex items-center">
+                    <svg class="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.91 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                    GitHub
+                </a>
+            </nav>
+            <button id="mobile-menu-button" class="md:hidden text-gray-700 focus:outline-none">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+            </button>
+        </div>
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="hidden md:hidden px-6 pb-4">
+            <a href="#projects" class="block py-2 text-gray-600 hover:text-blue-600">Projects</a>
+            <a href="#about" class="block py-2 text-gray-600 hover:text-blue-600">About</a>
+            <a href="#contact" class="block py-2 text-gray-600 hover:text-blue-600">Contact</a>
+            <a href="https://github.com/YOUR_USERNAME" target="_blank" class="block mt-2 bg-gray-800 text-white px-4 py-2 rounded-lg hover:bg-gray-900 text-center">GitHub</a>
+        </div>
+    </header>
+
+    <main>
+        <!-- Hero Section -->
+        <section class="relative pt-32 pb-20 md:pt-48 md:pb-32 hero-pattern">
+            <div class="container mx-auto px-6 text-center">
+                <div class="fade-in-up">
+                    <h1 class="text-4xl md:text-6xl font-extrabold text-gray-900 leading-tight">Digital Craftsman & Innovator</h1>
+                </div>
+                <div class="fade-in-up delay-100">
+                    <p class="mt-4 max-w-2xl mx-auto text-lg md:text-xl text-gray-600">Welcome to my personal corner of the web. I build beautiful, functional, and user-centric web applications. Explore my projects below.</p>
+                </div>
+                <div class="fade-in-up delay-200">
+                    <a href="#projects" class="mt-8 inline-block bg-blue-600 text-white font-semibold px-8 py-3 rounded-lg shadow-lg hover:bg-blue-700 transition-all duration-300 transform hover:scale-105">
+                        View My Work
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Projects Section -->
+        <section id="projects" class="py-20 bg-white">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl md:text-4xl font-bold text-gray-900">My Projects</h2>
+                    <p class="mt-2 text-lg text-gray-500">A selection of things I've built.</p>
+                </div>
+
+                <!-- Project Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                    
+                    <!-- Project Card 1: Replace with your project details -->
+                    <div class="bg-white rounded-xl overflow-hidden shadow-lg card-hover-effect fade-in-up delay-300">
+                        <img src="https://placehold.co/600x400/3b82f6/ffffff?text=Project+One" alt="Project One Screenshot" class="w-full h-48 object-cover">
+                        <div class="p-6">
+                            <h3 class="text-xl font-bold mb-2">Project Title One</h3>
+                            <p class="text-gray-600 mb-4">A brief, compelling description of this project. Explain the 'what' and 'why' in a sentence or two.</p>
+                            <div class="mb-4">
+                                <span class="inline-block bg-blue-100 text-blue-800 text-xs font-semibold mr-2 px-2.5 py-0.5 rounded-full">HTML</span>
+                                <span class="inline-block bg-green-100 text-green-800 text-xs font-semibold mr-2 px-2.5 py-0.5 rounded-full">CSS</span>
+                                <span class="inline-block bg-yellow-100 text-yellow-800 text-xs font-semibold mr-2 px-2.5 py-0.5 rounded-full">JavaScript</span>
+                            </div>
+                            <a href="https://YOUR_USERNAME.github.io/REPOSITORY_NAME_ONE/" target="_blank" class="font-semibold text-blue-600 hover:text-blue-800 transition-colors">
+                                View Live Site &rarr;
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Project Card 2: Replace with your project details -->
+                    <div class="bg-white rounded-xl overflow-hidden shadow-lg card-hover-effect fade-in-up delay-400">
+                        <img src="https://placehold.co/600x400/10b981/ffffff?text=Project+Two" alt="Project Two Screenshot" class="w-full h-48 object-cover">
+                        <div class="p-6">
+                            <h3 class="text-xl font-bold mb-2">Project Title Two</h3>
+                            <p class="text-gray-600 mb-4">Describe what makes this project special. What problem does it solve or what technology does it showcase?</p>
+                            <div class="mb-4">
+                                <span class="inline-block bg-purple-100 text-purple-800 text-xs font-semibold mr-2 px-2.5 py-0.5 rounded-full">React</span>
+                                <span class="inline-block bg-sky-100 text-sky-800 text-xs font-semibold mr-2 px-2.5 py-0.5 rounded-full">Tailwind CSS</span>
+                            </div>
+                            <a href="https://YOUR_USERNAME.github.io/REPOSITORY_NAME_TWO/" target="_blank" class="font-semibold text-blue-600 hover:text-blue-800 transition-colors">
+                                View Live Site &rarr;
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- Project Card 3: Replace with your project details -->
+                    <div class="bg-white rounded-xl overflow-hidden shadow-lg card-hover-effect fade-in-up delay-500">
+                        <img src="https://placehold.co/600x400/ef4444/ffffff?text=Project+Three" alt="Project Three Screenshot" class="w-full h-48 object-cover">
+                        <div class="p-6">
+                            <h3 class="text-xl font-bold mb-2">Project Title Three</h3>
+                            <p class="text-gray-600 mb-4">Another cool project. Maybe this one involved an interesting API or a unique design challenge.</p>
+                             <div class="mb-4">
+                                <span class="inline-block bg-gray-100 text-gray-800 text-xs font-semibold mr-2 px-2.5 py-0.5 rounded-full">API</span>
+                                <span class="inline-block bg-orange-100 text-orange-800 text-xs font-semibold mr-2 px-2.5 py-0.5 rounded-full">D3.js</span>
+                            </div>
+                            <a href="https://YOUR_USERNAME.github.io/REPOSITORY_NAME_THREE/" target="_blank" class="font-semibold text-blue-600 hover:text-blue-800 transition-colors">
+                                View Live Site &rarr;
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- You can copy and paste the card structure to add more projects -->
+
+                </div>
+            </div>
+        </section>
+
+        <!-- About Me Section -->
+        <section id="about" class="py-20">
+            <div class="container mx-auto px-6">
+                <div class="max-w-4xl mx-auto text-center">
+                    <h2 class="text-3xl md:text-4xl font-bold text-gray-900">About Me</h2>
+                    <img src="https://placehold.co/128x128/e0e7ff/3730a3?text=You" alt="Your Name" class="w-32 h-32 rounded-full mx-auto mt-8 mb-6 border-4 border-white shadow-lg">
+                    <p class="text-lg text-gray-600 leading-relaxed">
+                        I'm a passionate developer with a love for creating clean, elegant, and efficient solutions. My journey in web development started with a curiosity for how things work, and it has evolved into a career where I get to build amazing things every day. When I'm not coding, you can find me exploring new technologies, contributing to open-source projects, or enjoying a good cup of coffee.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Contact Section -->
+        <section id="contact" class="py-20 bg-white">
+            <div class="container mx-auto px-6 text-center">
+                <h2 class="text-3xl md:text-4xl font-bold text-gray-900">Get In Touch</h2>
+                <p class="mt-4 max-w-xl mx-auto text-lg text-gray-600">
+                    I'm always open to discussing new projects, creative ideas, or opportunities to be part of an amazing team. Feel free to connect with me.
+                </p>
+                <div class="mt-8">
+                    <a href="mailto:your.email@example.com" class="inline-block bg-blue-600 text-white font-semibold px-8 py-3 rounded-lg shadow-lg hover:bg-blue-700 transition-all duration-300 transform hover:scale-105">
+                        Say Hello
+                    </a>
+                </div>
+                <!-- Social Links -->
+                <div class="mt-12 flex justify-center space-x-6">
+                    <a href="https://github.com/YOUR_USERNAME" target="_blank" class="text-gray-400 hover:text-gray-600 transition-colors">
+                        <svg class="w-8 h-8" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.91 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                    </a>
+                    <!-- Add other social links like LinkedIn, Twitter, etc. -->
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white py-6">
+        <div class="container mx-auto px-6 text-center">
+            <p>&copy; 2024 Your Name. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Mobile menu toggle
+        const menuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+
+        menuButton.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        // Close mobile menu when a link is clicked
+        const navLinks = document.querySelectorAll('#mobile-menu a');
+        navLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                mobileMenu.classList.add('hidden');
+            });
+        });
+
+        // Intersection Observer for animations
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('fade-in-up');
+                }
+            });
+        }, {
+            threshold: 0.1
+        });
+
+        const elementsToAnimate = document.querySelectorAll('.fade-in-up');
+        elementsToAnimate.forEach(el => observer.observe(el));
+    </script>
+</body>
+</html>
