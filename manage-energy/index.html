@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ابزار جامع ارزیابی و مدیریت انرژی</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Vazirmatn', sans-serif;
+            scroll-behavior: smooth;
+        }
+       .tab-button.active {
+            border-color: #3b82f6;
+            background-color: #3b82f6;
+            color: white;
+        }
+       .tab-content {
+            display: none;
+        }
+       .tab-content.active {
+            display: block;
+        }
+        /* Custom styles for better Persian layout */
+        th, td {
+            text-align: right;
+            padding: 12px 15px;
+        }
+        select {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23007CB2%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E');
+            background-repeat: no-repeat;
+            background-position: left.7em top 50%, 0 0;
+            background-size:.65em auto, 100%;
+            padding-left: 2em;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <div class="container mx-auto p-4 sm:p-6 md:p-8">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl sm:text-4xl font-bold text-gray-900">ابزار جامع و پیشرفته مدیریت انرژی</h1>
+            <p class="mt-2 text-lg text-gray-600">بر اساس مدل تونی شوارتز: "انرژی خود را مدیریت کنید، نه زمانتان را"</p>
+        </header>
+
+        <div class="mb-6 border-b border-gray-200">
+            <nav class="flex flex-wrap -mb-px" aria-label="Tabs">
+                <button class="tab-button active text-lg font-bold border-b-2 border-transparent py-4 px-6 transition-colors duration-300" onclick="changeTab(event, 'audit')">۱. ارزیابی انرژی</button>
+                <button class="tab-button text-lg font-bold border-b-2 border-transparent py-4 px-6 transition-colors duration-300" onclick="changeTab(event, 'dashboard')">۲. داشبورد نتایج</button>
+                <button class="tab-button text-lg font-bold border-b-2 border-transparent py-4 px-6 transition-colors duration-300" onclick="changeTab(event, 'guide')">۳. راهنمای سوالات</button>
+            </nav>
+        </div>
+
+        <div id="audit" class="tab-content active">
+            <div class="bg-white p-6 rounded-xl shadow-md">
+                <h2 class="text-2xl font-bold mb-4 text-blue-600">پرسشنامه ارزیابی جامع</h2>
+                <p class="mb-6 text-gray-600">لطفاً به هر سوال بر اساس شرایط واقعی زندگی‌تان امتیاز دهید. (۱ = هرگز، ۵ = همیشه)</p>
+                <div id="questions-container" class="overflow-x-auto"></div>
+            </div>
+        </div>
+
+        <div id="dashboard" class="tab-content">
+            <div class="bg-white p-6 rounded-xl shadow-md">
+                <h2 class="text-2xl font-bold mb-6 text-blue-600">داشبورد نتایج شما</h2>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h3 class="text-xl font-bold mb-4 text-center">پروفایل انرژی شما</h3>
+                        <canvas id="energyRadarChart"></canvas>
+                    </div>
+                    <div class="space-y-6">
+                        <div id="score-cards-container"></div>
+                        <div class="bg-blue-50 border-r-4 border-blue-500 p-4 rounded-lg">
+                            <h3 class="text-xl font-bold mb-2">تحلیل کلی</h3>
+                            <p id="overall-analysis" class="text-gray-700">با پاسخ به سوالات، تحلیل وضعیت شما در اینجا نمایش داده می‌شود.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="guide" class="tab-content">
+            <div class="bg-white p-6 rounded-xl shadow-md">
+                <h2 class="text-2xl font-bold mb-4 text-blue-600">راهنمای تفصیلی سوالات</h2>
+                <p class="mb-6 text-gray-600">در این بخش توضیحات بیشتری برای درک عمیق‌تر هر سوال ارائه شده است.</p>
+                <div id="guide-container" class="space-y-4"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const energyData = {
+            physical: {
+                title: 'انرژی جسمی (بدن)',
+                color: 'rgba(255, 99, 132, 0.5)',
+                score: 0,
+                questions: [
+                    { q: 'من به طور منظم ۷ تا ۸ ساعت خواب باکیفیت دارم و با احساس شادابی از خواب بیدار می‌شوم.', a: 0, g: 'خواب کافی و باکیفیت، پایه و اساس تمام انرژی‌هاست و مستقیماً بر تمرکز و خلق‌وخو تأثیر می‌گذارد. [4]' },
+                    { q: 'رژیم غذایی من متعادل است و با خوردن وعده‌های کوچک و منظم، انرژی پایداری در طول روز دارم.', a: 0, g: 'حفظ سطح قند خون پایدار از طریق تغذیه مناسب، از نوسانات شدید انرژی جلوگیری می‌کند. [5, 6, 7]' },
+                    { q: 'من حداقل ۳ بار در هفته تمرینات قلبی-عروقی و ۱ بار تمرینات قدرتی انجام می‌دهم.', a: 0, g: 'ورزش منظم نه‌تنها ظرفیت جسمی را بالا می‌برد، بلکه به کاهش استرس و بهبود کیفیت خواب نیز کمک می‌کند. [5, 6]' },
+                    { q: 'من در طول روز کاری، هر ۹۰ تا ۱۲۰ دقیقه یک استراحت کوتاه و واقعی (دور از میز کار) برای تجدید قوا دارم.', a: 0, g: 'کار مداوم و بدون وقفه، برخلاف ریتم طبیعی بدن (ریتم اولترادین) است و بهره‌وری را کاهش می‌دهد. [6, 4]' },
+                    { q: 'من به ندرت وعده‌های غذایی اصلی (مانند صبحانه) را حذف می‌کنم.', a: 0, g: 'حذف وعده‌های غذایی، به ویژه صبحانه، باعث افت شدید انرژی و کاهش عملکرد در طول روز می‌شود. [8, 1]' },
+                    { q: 'من به علائم خستگی بدنم (مانند بی‌قراری یا خمیازه) توجه کرده و به موقع استراحت می‌کنم.', a: 0, g: 'آگاهی از سیگنال‌های بدن برای نیاز به استراحت، یک مهارت کلیدی در مدیریت پیشگیرانه انرژی است. [5, 6]' }
+                ]
+            },
+            emotional: {
+                title: 'انرژی احساسی (قلب)',
+                color: 'rgba(54, 162, 235, 0.5)',
+                score: 0,
+                questions: [
+                    { q: 'من می‌توانم در شرایط استرس‌زا، احساسات منفی خود را کنترل کرده و آرامش خود را حفظ کنم.', a: 0, g: 'توانایی مدیریت احساسات منفی (مانند اضطراب و بی‌حوصلگی) از تخلیه انرژی جلوگیری کرده و عملکرد را بهبود می‌بخشد. [5, 6]' },
+                    { q: 'من به طور منظم و با ذکر جزئیات مشخص از دیگران قدردانی می‌کنم.', a: 0, g: 'ابراز قدردانی یک آیین قدرتمند برای تقویت احساسات مثبت در خود و دیگران است. [6, 4, 9]' },
+                    { q: 'در مواجهه با چالش‌ها، سعی می‌کنم موقعیت را از دیدگاه‌های مختلف (مثلاً دیدگاه طرف مقابل) ببینم.', a: 0, g: 'این تکنیک (لنز معکوس) به کاهش احساس قربانی بودن کمک کرده و همدلی را تقویت می‌کند. [5, 6, 9]' },
+                    { q: 'من زمان کافی را به فعالیت‌هایی که عمیقاً از آنها لذت می‌برم، اختصاص می‌دهم.', a: 0, g: 'فعالیت‌های لذت‌بخش و رضایت‌آور، منابع اصلی تجدید انرژی عاطفی هستند. [8, 1]' },
+                    { q: 'وقتی در کنار خانواده و عزیزانم هستم، کاملاً حضور دارم و حواسم پرت نیست.', a: 0, g: 'حضور کامل در روابط کلیدی، کیفیت این روابط را بهبود بخشیده و منبع مهمی برای انرژی عاطفی است. [8, 1]' },
+                    { q: 'من نسبت به خودم شفقت دارم و از خودانتقادگری بیش از حد پرهیز می‌کنم.', a: 0, g: 'خودشفقتی در مقابل خودانتقادگری، تاب‌آوری را افزایش داده و از تخلیه انرژی در هنگام شکست جلوگیری می‌کند. [2, 10]' }
+                ]
+            },
+            mental: {
+                title: 'انرژی ذهنی (ذهن)',
+                color: 'rgba(255, 206, 86, 0.5)',
+                score: 0,
+                questions: [
+                    { q: 'من می‌توانم برای مدتی طولانی روی یک کار مهم و بدون حواس‌پرتی (مانند ایمیل) تمرکز کنم.', a: 0, g: 'تمرکز عمیق و تک‌کاری (Monotasking) برای کارهای باارزش ضروری است. چندوظیفگی انرژی ذهنی را به شدت تحلیل می‌برد. [6, 4, 1]' },
+                    { q: 'من در پایان هر روز، مهم‌ترین اولویت روز بعد را مشخص می‌کنم.', a: 0, g: 'این آیین قدرتمند تضمین می‌کند که بهترین انرژی شما صرف مهم‌ترین کارتان شود و از خستگی تصمیم‌گیری در صبح جلوگیری می‌کند. [5, 6, 9]' },
+                    { q: 'بیشتر وقت من صرف کارهای استراتژیک و بلندمدت می‌شود تا واکنش به بحران‌های فوری.', a: 0, g: 'این سوال، میزان کنترل شما بر کارتان را می‌سنجد. کار واکنشی انرژی‌بر و کم‌اثر است. [8, 1]' },
+                    { q: 'من زمان کافی برای تأمل، استراتژی‌پردازی و تفکر خلاقانه در نظر می‌گیرم.', a: 0, g: 'تفکر استراتژیک نیازمند تخصیص زمان آگاهانه است و در شلوغی کارهای روزمره گم نمی‌شود. [8, 1, 3]' },
+                    { q: 'من برای پاسخ به ایمیل‌ها و پیام‌ها زمان‌های مشخصی را در نظر می‌گیرم و به طور مداوم آن‌ها را چک نمی‌کنم.', a: 0, g: 'این تکنیک (Batching) به شما کمک می‌کند کنترل توجه خود را پس بگیرید و از وقفه‌های مداوم جلوگیری کنید. [5, 6]' },
+                    { q: 'من در تعطیلات به طور کامل از کار جدا می‌شوم و به ندرت ایمیل‌های کاری را چک می‌کنم.', a: 0, g: 'ریکاوری واقعی نیازمند جدایی کامل از کار است. تعطیلات بدون ایمیل برای بازیابی انرژی ذهنی حیاتی است. [8, 1]' }
+                ]
+            },
+            spiritual: {
+                title: 'انرژی روحی (روح)',
+                color: 'rgba(75, 192, 192, 0.5)',
+                score: 0,
+                questions: [
+                    { q: 'فعالیت‌های روزانه من بازتابی از عمیق‌ترین ارزش‌های زندگی‌ام هستند.', a: 0, g: 'همسویی بین ارزش‌ها و اعمال، قدرتمندترین منبع انگیزه و انرژی معنوی است. [4, 7]' },
+                    { q: 'من زمان کافی را در کار صرف انجام فعالیت‌هایی می‌کنم که در آن‌ها بهترین هستم و از آن‌ها لذت می‌برم (نقطه مطلوب).', a: 0, g: 'کار کردن در "نقطه مطلوب" (Sweet Spot) احساس اثربخشی و رضایت عمیقی ایجاد می‌کند. [5, 6, 1]' },
+                    { q: 'تصمیمات من در کار بیشتر تحت تأثیر هدفمندی درونی‌ام است تا فشارهای بیرونی.', a: 0, g: 'این سوال میزان استقلال و اصالت شما را در کار می‌سنجد. انگیزه درونی پایدارتر از فشارهای خارجی است. [8, 1]' },
+                    { q: 'من احساس می‌کنم کارم تأثیر مثبت و معناداری بر دیگران یا دنیا دارد.', a: 0, g: 'ارتباط با هدفی بزرگ‌تر از خود، منبع قدرتمندی از پشتکار و تعهد است. [8, 1]' },
+                    { q: 'من به طور روزانه برای قدردانی و شکرگزاری از نعمت‌های زندگی‌ام وقت می‌گذارم.', a: 0, g: 'شکرگزاری یک آیین معنوی است که تمرکز را از کمبودها به سمت فراوانی‌ها تغییر می‌دهد و انرژی مثبت ایجاد می‌کند. [2]' },
+                    { q: 'من نسبت به ارزش‌ها و باورهای متفاوت با ارزش‌های خودم، رویکردی باز و محترمانه دارم.', a: 0, g: 'این سوال، ظرفیت شما برای پذیرش و احترام به دیگران را می‌سنجد که یکی از جنبه‌های بلوغ معنوی است. [3]' }
+                ]
+            }
+        };
+
+        // DOM Elements
+        const questionsContainer = document.getElementById('questions-container');
+        const guideContainer = document.getElementById('guide-container');
+        const scoreCardsContainer = document.getElementById('score-cards-container');
+        const overallAnalysisEl = document.getElementById('overall-analysis');
+        const chartCanvas = document.getElementById('energyRadarChart');
+        let energyChart;
+
+        // Functions
+        function changeTab(event, tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-button').forEach(button => button.classList.remove('active'));
+            document.getElementById(tabName).classList.add('active');
+            event.currentTarget.classList.add('active');
+        }
+
+        function handleScoreChange(category, questionIndex, value) {
+            energyData[category].questions[questionIndex].a = parseInt(value);
+            updateDashboard();
+        }
+
+        function renderQuestions() {
+            let html = '';
+            for (const category in energyData) {
+                const data = energyData[category];
+                html += `<h3 class="text-xl font-bold mt-6 mb-3 text-gray-700">${data.title}</h3>`;
+                html += `<table class="min-w-full bg-white border border-gray-200 rounded-lg"><tbody>`;
+                data.questions.forEach((item, index) => {
+                    html += `<tr class="border-b">
+                                <td class="w-4/5">${item.q}</td>
+                                <td class="w-1/5">
+                                    <select onchange="handleScoreChange('${category}', ${index}, this.value)" class="w-full p-2 border rounded-md bg-gray-50">
+                                        <option value="0" selected disabled>انتخاب</option>
+                                        <option value="1">۱ (هرگز)</option>
+                                        <option value="2">۲ (به ندرت)</option>
+                                        <option value="3">۳ (گاهی)</option>
+                                        <option value="4">۴ (اغلب)</option>
+                                        <option value="5">۵ (همیشه)</option>
+                                    </select>
+                                </td>
+                            </tr>`;
+                });
+                html += `</tbody></table>`;
+            }
+            questionsContainer.innerHTML = html;
+        }
+
+        function renderGuide() {
+            let html = '';
+            for (const category in energyData) {
+                const data = energyData[category];
+                html += `<div class="p-4 rounded-lg bg-gray-50 mb-4"><h3 class="text-xl font-bold mb-3 text-gray-700">${data.title}</h3>`;
+                data.questions.forEach(item => {
+                    html += `<div class="border-t pt-3 mt-3">
+                                <p class="font-semibold">${item.q}</p>
+                                <p class="text-gray-600 mt-1">${item.g}</p>
+                             </div>`;
+                });
+                html += `</div>`;
+            }
+            guideContainer.innerHTML = html;
+        }
+
+        function updateDashboard() {
+            let totalScore = 0;
+            let totalQuestions = 0;
+            let scoreCardsHtml = '';
+            
+            const chartLabels =;
+            const chartData =;
+
+            for (const category in energyData) {
+                const data = energyData[category];
+                const maxScore = data.questions.length * 5;
+                const currentScore = data.questions.reduce((sum, item) => sum + item.a, 0);
+                data.score = currentScore;
+                totalScore += currentScore;
+                totalQuestions += data.questions.length;
+
+                const percentage = maxScore > 0? (currentScore / maxScore) * 100 : 0;
+                
+                let bgColor = 'bg-red-100';
+                if (percentage > 66) bgColor = 'bg-green-100';
+                else if (percentage > 33) bgColor = 'bg-yellow-100';
+
+                scoreCardsHtml += `
+                    <div class="${bgColor} p-4 rounded-lg shadow">
+                        <div class="flex justify-between items-center">
+                            <h4 class="text-lg font-bold">${data.title}</h4>
+                            <span class="font-bold text-xl">${currentScore} / ${maxScore}</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2.5 mt-2">
+                            <div class="h-2.5 rounded-full" style="width: ${percentage}%; background-color: ${data.color.replace('0.5', '1')}"></div>
+                        </div>
+                    </div>
+                `;
+                chartLabels.push(data.title);
+                chartData.push(currentScore);
+            }
+
+            scoreCardsContainer.innerHTML = scoreCardsHtml;
+            updateChart(chartLabels, chartData);
+            updateAnalysis(totalScore, totalQuestions);
+        }
+        
+        function updateAnalysis(totalScore, totalQuestions) {
+            const maxTotalScore = totalQuestions * 5;
+            const percentage = maxTotalScore > 0? (totalScore / maxTotalScore) * 100 : 0;
+            
+            let analysisText = '';
+            if (totalScore === 0) {
+                 analysisText = 'با پاسخ به سوالات، تحلیل وضعیت شما در اینجا نمایش داده می‌شود.';
+            } else if (percentage < 40) {
+                analysisText = `امتیاز کلی شما ${totalScore} از ${maxTotalScore} است. وضعیت انرژی شما در سطح بحرانی قرار دارد و نیازمند اقدام فوری است. لطفاً روی بخش‌هایی که کمترین امتیاز را دارند تمرکز کنید.`;
+            } else if (percentage < 70) {
+                analysisText = `امتیاز کلی شما ${totalScore} از ${maxTotalScore} است. وضعیت شما خوب است اما جای پیشرفت زیادی وجود دارد. با ایجاد آیین‌های کوچک و پایدار در بخش‌های ضعیف‌تر، می‌توانید به سطح بالاتری از انرژی و عملکرد برسید.`;
+            } else {
+                analysisText = `امتیاز کلی شما ${totalScore} از ${maxTotalScore} است. تبریک! شما مدیریت انرژی بسیار خوبی دارید. برای حفظ این وضعیت، به آیین‌های مثبت خود ادامه دهید و همواره مراقب تعادل بین ابعاد مختلف انرژی باشید.`;
+            }
+            overallAnalysisEl.textContent = analysisText;
+        }
+
+        function initializeChart() {
+            const ctx = chartCanvas.getContext('2d');
+            energyChart = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels:,
+                    datasets: [{
+                        label: 'امتیاز انرژی',
+                        data:,
+                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 2,
+                        pointBackgroundColor: 'rgba(54, 162, 235, 1)',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: 'rgba(54, 162, 235, 1)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    scales: {
+                        r: {
+                            angleLines: {
+                                display: true
+                            },
+                            suggestedMin: 0,
+                            suggestedMax: 30, // 6 questions * 5 points
+                            pointLabels: {
+                                font: {
+                                    size: 14,
+                                    family: 'Vazirmatn'
+                                }
+                            },
+                            ticks: {
+                                stepSize: 5
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateChart(labels, data) {
+            energyChart.data.labels = labels;
+            energyChart.data.datasets.data = data;
+            energyChart.update();
+        }
+
+        // Initial Load
+        document.addEventListener('DOMContentLoaded', () => {
+            renderQuestions();
+            renderGuide();
+            initializeChart();
+            updateDashboard();
+        });
+    </script>
+</body>
+</html>

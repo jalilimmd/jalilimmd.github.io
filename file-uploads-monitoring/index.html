@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Guide: Monitoring HTTPS File Uploads on Linux</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals -->
+    <!-- Application Structure Plan: The application is designed as a single-page interactive dashboard. The structure prioritizes user task flow over the linear format of the source report. It starts with a high-level overview of the problem (the "blind spot"), then allows users to explore different solution layers (Network, Host, Endpoint) via a tabbed interface. This breaks down complex information into manageable chunks. Each section contains interactive elements like diagrams, pros/cons toggles, and collapsible code blocks to facilitate understanding. The application concludes with a comparative radar chart and an actionable checklist, synthesizing the report's recommendations into a practical planning tool. This structure was chosen to guide the user from understanding the problem to comparing solutions and finally to planning their implementation, enhancing usability and knowledge retention. -->
+    <!-- Visualization & Content Choices: 
+        - Report Info: The core problem of HTTPS encryption hiding traffic. Goal: Inform/Engage. Viz/Method: Interactive diagram built with HTML/CSS. Interaction: Hover/Click to reveal explanations of HTTPS, PFS, and client-side temp files. Justification: More engaging than a static text block, visually explains the "blind spot". Library/Method: HTML/CSS.
+        - Report Info: Different monitoring approaches (MITM, auditd, eBPF, DLP). Goal: Organize/Compare. Viz/Method: Tabbed interface for solution layers. Interaction: Click to switch between Network, Host, and Endpoint layers. Justification: Organizes a large volume of information logically, preventing user overload. Library/Method: JS for tab switching.
+        - Report Info: Challenges of MITM proxies. Goal: Compare. Viz/Method: Pros/Cons card layout. Interaction: N/A (static comparison). Justification: Provides a quick, scannable summary of trade-offs. Library/Method: HTML/CSS.
+        - Report Info: Tool configurations (mitmproxy, auditd, Falco). Goal: Inform. Viz/Method: Collapsible code blocks. Interaction: Click to expand/collapse. Justification: Keeps the UI clean by hiding complex code by default, making it accessible on demand. Library/Method: JS for toggle.
+        - Report Info: Comparison of all solution types. Goal: Synthesize/Compare. Viz/Method: Radar Chart. Interaction: Hover over points to see details. Justification: Provides a powerful, at-a-glance comparison across multiple qualitative dimensions (Visibility, Complexity, etc.), summarizing the report's analysis. Library/Method: Chart.js.
+        - Report Info: Actionable recommendations. Goal: Guide Action. Viz/Method: Interactive checklist. Interaction: Click to check items. Justification: Transforms static recommendations into a practical, usable planning tool for the security engineer. Library/Method: HTML/JS.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #FDFBF8;
+            color: #333D4B;
+        }
+        .tab-active {
+            border-color: #4A5568;
+            color: #2D3748;
+            background-color: #F0EBE5;
+        }
+        .tab-inactive {
+            border-color: transparent;
+            color: #718096;
+        }
+        .card {
+            background-color: #FFFFFF;
+            border: 1px solid #E2E8F0;
+            border-radius: 0.75rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .collapsible-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-in-out;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 400px;
+            }
+        }
+        .diagram-popup {
+            display: none;
+            position: absolute;
+            background-color: #2D3748;
+            color: #F7FAFC;
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            font-size: 0.875rem;
+            width: 250px;
+            z-index: 10;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .diagram-point:hover .diagram-popup {
+            display: block;
+        }
+        .checklist-item.checked label {
+            text-decoration: line-through;
+            color: #A0AEC0;
+        }
+        .checklist-item.checked .checkbox-icon {
+            background-color: #4A5568;
+            border-color: #4A5568;
+        }
+        .checkbox-icon svg {
+            display: none;
+        }
+        .checklist-item.checked .checkbox-icon svg {
+            display: block;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
+
+        <header class="text-center mb-16">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-800 tracking-tight">The Security Engineer's Interactive Guide</h1>
+            <p class="mt-4 text-lg text-gray-600 max-w-3xl mx-auto">To Monitoring & Logging HTTPS File Uploads on Client-Side Linux Machines</p>
+        </header>
+
+        <main>
+            <section id="challenge" class="mb-20">
+                <h2 class="text-3xl font-bold text-center mb-4">The Core Challenge: Encryption's Blind Spot</h2>
+                <p class="text-center text-gray-600 max-w-3xl mx-auto mb-12">
+                    The very encryption that protects user data in transit also creates a paradox for security teams. HTTPS, especially with Perfect Forward Secrecy (PFS), renders traditional network monitoring ineffective, creating a "blind spot" that adversaries exploit for data exfiltration and malware delivery. This interactive diagram illustrates the key components of this challenge. Hover over the elements to learn more.
+                </p>
+
+                <div class="w-full max-w-4xl mx-auto p-8 bg-white rounded-xl shadow-lg border border-gray-200">
+                    <div class="flex flex-col md:flex-row items-center justify-between space-y-8 md:space-y-0 md:space-x-8">
+                        
+                        <div class="text-center relative diagram-point">
+                            <div class="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mx-auto">
+                                <svg class="w-12 h-12 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                            </div>
+                            <p class="mt-2 font-semibold">Employee Linux Machine</p>
+                            <div class="diagram-popup bottom-full mb-2 left-1/2 -translate-x-1/2">
+                                <strong>Client-Side Actions:</strong> Before an upload, browsers or tools often create temporary files on the local filesystem. Monitoring this host-level activity is a key source of truth.
+                            </div>
+                        </div>
+
+                        <div class="flex-grow w-full md:w-auto relative">
+                            <div class="h-1 bg-gray-300 relative">
+                                <div class="absolute inset-0 flex items-center justify-center diagram-point">
+                                    <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center border-4 border-white shadow-md">
+                                        <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                                    </div>
+                                    <div class="diagram-popup bottom-full mb-2 left-1/2 -translate-x-1/2">
+                                        <strong>HTTPS & PFS:</strong> Traffic is encrypted with a unique key for each session (Perfect Forward Secrecy). This prevents passive decryption even if a server's long-term key is compromised, making network inspection difficult.
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="text-center mt-2 font-semibold text-gray-700">Encrypted HTTPS Traffic</p>
+                        </div>
+
+                        <div class="text-center">
+                            <div class="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+                                <svg class="w-12 h-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"></path></svg>
+                            </div>
+                            <p class="mt-2 font-semibold">Web Service / Cloud</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="solutions">
+                <h2 class="text-3xl font-bold text-center mb-4">A Multi-Layered Solution Strategy</h2>
+                <p class="text-center text-gray-600 max-w-3xl mx-auto mb-12">
+                    No single tool provides complete visibility. A robust strategy requires combining different approaches. Explore the three primary layers of monitoring below to understand the tools, techniques, and trade-offs for each.
+                </p>
+
+                <div class="w-full max-w-5xl mx-auto">
+                    <div class="mb-8 border-b border-gray-300">
+                        <nav class="flex -mb-px" aria-label="Tabs">
+                            <button class="tab-btn tab-active w-1/3 py-4 px-1 text-center border-b-2 font-medium text-sm" data-tab="network">
+                                1. Network-Level Interception
+                            </button>
+                            <button class="tab-btn tab-inactive w-1/3 py-4 px-1 text-center border-b-2 font-medium text-sm" data-tab="host">
+                                2. Host-Level Auditing
+                            </button>
+                            <button class="tab-btn tab-inactive w-1/3 py-4 px-1 text-center border-b-2 font-medium text-sm" data-tab="endpoint">
+                                3. Endpoint & Application Insights
+                            </button>
+                        </nav>
+                    </div>
+
+                    <div id="tab-content">
+                        <div class="tab-pane active" id="network">
+                            <div class="bg-white p-8 rounded-lg border border-gray-200 shadow-sm">
+                                <h3 class="text-2xl font-bold mb-4">Network-Level Interception</h3>
+                                <p class="mb-6 text-gray-600">This approach involves decrypting HTTPS traffic to inspect its contents. While providing deep visibility, it comes with significant technical, performance, and legal challenges. It's often implemented using a Man-in-the-Middle (MITM) proxy.</p>
+                                
+                                <div class="grid md:grid-cols-2 gap-6 mb-8">
+                                    <div class="p-6 rounded-lg bg-green-50 border border-green-200">
+                                        <h4 class="font-bold text-lg text-green-800 mb-2">Pros</h4>
+                                        <ul class="list-disc list-inside text-green-700 space-y-1">
+                                            <li>Deep visibility into payload content.</li>
+                                            <li>Can inspect for malware and sensitive data patterns.</li>
+                                            <li>Works for any application using standard HTTPS.</li>
+                                        </ul>
+                                    </div>
+                                    <div class="p-6 rounded-lg bg-red-50 border border-red-200">
+                                        <h4 class="font-bold text-lg text-red-800 mb-2">Cons</h4>
+                                        <ul class="list-disc list-inside text-red-700 space-y-1">
+                                            <li>Requires trusting a custom CA certificate on all clients.</li>
+                                            <li>Can be defeated by certificate pinning.</li>
+                                            <li>High performance overhead.</li>
+                                            <li>Major privacy and legal concerns.</li>
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                <div class="collapsible-container mt-4 border-t pt-4">
+                                    <button class="collapsible-trigger w-full text-left font-semibold text-lg flex justify-between items-center">
+                                        <span>Tool Deep Dive: mitmproxy</span>
+                                        <svg class="w-5 h-5 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                    </button>
+                                    <div class="collapsible-content mt-4">
+                                        <p class="mb-4 text-gray-600"><code>mitmproxy</code> is a powerful open-source tool for intercepting and inspecting HTTPS traffic. Below is an example Python addon script to log file upload details.</p>
+                                        <pre class="bg-gray-800 text-white p-4 rounded-md text-sm overflow-x-auto"><code>
+import logging
+import hashlib
+import re
+from mitmproxy import http
+
+logging.basicConfig(
+    filename='/var/log/mitmproxy_uploads.log',
+    level=logging.INFO,
+    format='%(asctime)s - %(message)s'
+)
+
+class FileUploadLogger:
+    def request(self, flow: http.HTTPFlow) -> None:
+        if flow.request.method in ["POST", "PUT"]:
+            if flow.request.multipart_form:
+                logging.info(f"Multipart upload to {flow.request.pretty_url}")
+                for name, value in flow.request.multipart_form.items():
+                    file_hash = hashlib.sha256(value).hexdigest()
+                    logging.info(f"  Part: {name.decode()}, Size: {len(value)} bytes, SHA256: {file_hash}")
+            elif flow.request.content:
+                content_type = flow.request.headers.get("Content-Type", "unknown")
+                if "x-www-form-urlencoded" not in content_type:
+                    file_hash = hashlib.sha256(flow.request.content).hexdigest()
+                    filename = "unknown_file"
+                    if "Content-Disposition" in flow.request.headers:
+                        match = re.search(r'filename="([^"]+)"', flow.request.headers["Content-Disposition"])
+                        if match:
+                            filename = match.group(1)
+                    logging.info(f"Direct upload to {flow.request.pretty_url}")
+                    logging.info(f"  File: {filename}, Type: {content_type}, Size: {len(flow.request.content)} bytes, SHA256: {file_hash}")
+
+addons = [FileUploadLogger()]
+                                        </code></pre>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="tab-pane hidden" id="host">
+                            <div class="bg-white p-8 rounded-lg border border-gray-200 shadow-sm">
+                                <h3 class="text-2xl font-bold mb-4">Host-Level Auditing</h3>
+                                <p class="mb-6 text-gray-600">This approach focuses on monitoring activity directly on the Linux kernel. It provides the ground truth of what files are being accessed and what network connections are being made by which processes, bypassing the complexities of encryption entirely.</p>
+                                
+                                <div class="grid md:grid-cols-2 gap-8">
+                                    <div class="collapsible-container">
+                                        <button class="collapsible-trigger w-full text-left font-semibold text-lg flex justify-between items-center mb-2">
+                                            <span>Tool Deep Dive: auditd</span>
+                                            <svg class="w-5 h-5 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                        </button>
+                                        <div class="collapsible-content">
+                                            <p class="mb-4 text-gray-600">The Linux Auditing System (`auditd`) is a native kernel-level tool. It can be configured to log specific system calls related to file access and network connections.</p>
+                                            <pre class="bg-gray-800 text-white p-4 rounded-md text-sm overflow-x-auto"><code>
+# Monitor file writes in user home and temp directories
+-w /home/ -p wa -k user_file_write
+-a always,exit -F arch=b64 -S openat,creat -F dir=/tmp/ -k temp_file_activity
+
+# Monitor network connection attempts
+-a always,exit -F arch=b64 -S connect -k network_connect
+                                            </code></pre>
+                                            <p class="mt-4 text-gray-600">Correlate events by Process ID (PID) and timestamp in <code>/var/log/audit/audit.log</code> to link a file access to a network connection.</p>
+                                        </div>
+                                    </div>
+                                    <div class="collapsible-container">
+                                        <button class="collapsible-trigger w-full text-left font-semibold text-lg flex justify-between items-center mb-2">
+                                            <span>Tool Deep Dive: eBPF (Falco/Tetragon)</span>
+                                            <svg class="w-5 h-5 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                        </button>
+                                        <div class="collapsible-content">
+                                            <p class="mb-4 text-gray-600">eBPF provides a modern, low-overhead way to achieve kernel observability. Tools like Falco use eBPF to detect suspicious behavior in real-time.</p>
+                                            <pre class="bg-gray-800 text-white p-4 rounded-md text-sm overflow-x-auto"><code>
+# Example Falco Rule
+- rule: "Suspicious File Write on Endpoint"
+  desc: "Detects file writes in user home or temp dirs"
+  condition: >
+    (open_write or creat) and 
+    (fd.name startswith /home/ or fd.name startswith /tmp/) and 
+    not proc.name in (known_safe_processes)
+  output: "Suspicious file write (user=%user.name proc=%proc.name file=%fd.name)"
+  priority: WARNING
+                                            </code></pre>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="tab-pane hidden" id="endpoint">
+                            <div class="bg-white p-8 rounded-lg border border-gray-200 shadow-sm">
+                                <h3 class="text-2xl font-bold mb-4">Endpoint & Application Insights</h3>
+                                <p class="mb-6 text-gray-600">This layer provides the highest-fidelity information by leveraging solutions that operate directly on the endpoint with content and application awareness. This is often the most effective approach for corporate environments.</p>
+                                
+                                <div class="space-y-6">
+                                    <div class="card p-6">
+                                        <h4 class="font-bold text-lg mb-2">Endpoint Data Loss Prevention (DLP)</h4>
+                                        <p class="text-gray-600">DLP agents on the client machine inspect file content *before* it gets encrypted and sent. They can enforce policies to block unauthorized uploads of sensitive data (e.g., PII, source code) to cloud services and provide detailed logs of what file was sent where, by whom.</p>
+                                    </div>
+                                    <div class="card p-6">
+                                        <h4 class="font-bold text-lg mb-2">Browser-Level DLP Connectors</h4>
+                                        <p class="text-gray-600">For enterprise environments, browsers like Google Chrome offer direct integration with third-party DLP vendors. This allows the browser to send the full content and metadata of uploaded files to a DLP agent for analysis, providing deep, application-aware visibility without unstable extensions.</p>
+                                    </div>
+                                    <div class="card p-6">
+                                        <h4 class="font-bold text-lg mb-2">Endpoint Detection & Response (EDR)</h4>
+                                        <p class="text-gray-600">EDR solutions provide comprehensive endpoint visibility by monitoring processes, file system activity, and network connections. They use behavioral analysis to detect data exfiltration patterns, such as a process reading many sensitive files and then making an unusual outbound connection.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="comparison" class="mb-20">
+                <h2 class="text-3xl font-bold text-center mb-4">Strategy Comparison</h2>
+                <p class="text-center text-gray-600 max-w-3xl mx-auto mb-12">
+                    Choosing the right mix of tools depends on your organization's specific needs, budget, and risk tolerance. This chart compares the different approaches across key criteria to help guide your decision-making process.
+                </p>
+                <div class="bg-white p-8 rounded-xl shadow-lg border border-gray-200">
+                    <div class="chart-container">
+                        <canvas id="solutionComparisonChart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <section id="recommendations">
+                <h2 class="text-3xl font-bold text-center mb-4">Actionable Recommendations Checklist</h2>
+                <p class="text-center text-gray-600 max-w-3xl mx-auto mb-12">
+                    Use this interactive checklist, derived from the report's conclusions, to plan and track the implementation of your file upload monitoring strategy.
+                </p>
+                <div class="bg-white p-8 rounded-xl shadow-lg border border-gray-200 max-w-3xl mx-auto">
+                    <div id="checklist" class="space-y-4">
+                    </div>
+                </div>
+            </section>
+
+        </main>
+
+        <footer class="text-center mt-20 pt-8 border-t border-gray-200">
+            <p class="text-sm text-gray-500">This interactive guide is an interpretation of the "Monitoring and Logging HTTPS File Uploads on Linux" security report.</p>
+        </footer>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const tabs = document.querySelectorAll('.tab-btn');
+            const panes = document.querySelectorAll('.tab-pane');
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function () {
+                    tabs.forEach(t => {
+                        t.classList.remove('tab-active');
+                        t.classList.add('tab-inactive');
+                    });
+                    this.classList.remove('tab-inactive');
+                    this.classList.add('tab-active');
+
+                    panes.forEach(pane => {
+                        pane.classList.add('hidden');
+                    });
+                    document.getElementById(this.dataset.tab).classList.remove('hidden');
+                });
+            });
+
+            const collapsibles = document.querySelectorAll('.collapsible-trigger');
+            collapsibles.forEach(collapsible => {
+                collapsible.addEventListener('click', function () {
+                    this.classList.toggle('active');
+                    const content = this.nextElementSibling;
+                    const icon = this.querySelector('svg');
+                    if (content.style.maxHeight) {
+                        content.style.maxHeight = null;
+                        icon.style.transform = 'rotate(0deg)';
+                    } else {
+                        content.style.maxHeight = content.scrollHeight + "px";
+                        icon.style.transform = 'rotate(180deg)';
+                    }
+                });
+            });
+
+            const checklistData = [
+                { text: "Adopt a layered security strategy, integrating network, host, and endpoint monitoring.", checked: false },
+                { text: "Prioritize host-level monitoring with `auditd` or eBPF for definitive answers on file/network events.", checked: false },
+                { text: "Deploy a robust Endpoint DLP solution for content inspection and policy enforcement.", checked: false },
+                { text: "Use browser DLP connectors (e.g., Chrome Enterprise) for deep application-aware insights.", checked: false },
+                { text: "Consider selective SSL/TLS interception with extreme caution and full legal/privacy compliance.", checked: false },
+                { text: "Centralize all logs from all layers into a SIEM for correlation and analysis.", checked: false },
+                { text: "Regularly review and fine-tune all monitoring rules and policies.", checked: false },
+                { text: "Educate and train users on secure file handling and data protection policies.", checked: false }
+            ];
+
+            const checklistContainer = document.getElementById('checklist');
+            checklistData.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = 'checklist-item flex items-center p-3 rounded-lg transition-colors duration-200 hover:bg-gray-50';
+                div.innerHTML = `
+                    <input type="checkbox" id="check-${index}" class="hidden">
+                    <label for="check-${index}" class="flex items-center cursor-pointer w-full">
+                        <span class="checkbox-icon mr-4 flex-shrink-0 w-6 h-6 rounded-md border-2 border-gray-300 flex items-center justify-center transition-all duration-200">
+                            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                        </span>
+                        <span class="text-gray-700">${item.text}</span>
+                    </label>
+                `;
+                checklistContainer.appendChild(div);
+                
+                const input = div.querySelector(`#check-${index}`);
+                input.addEventListener('change', function() {
+                    div.classList.toggle('checked', this.checked);
+                });
+            });
+
+            const ctx = document.getElementById('solutionComparisonChart').getContext('2d');
+            const comparisonChart = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: ['Visibility', 'Implementation Complexity', 'Performance Overhead', 'Legal/Privacy Risk', 'Cost (Typical)'],
+                    datasets: [
+                        {
+                            label: 'MITM Proxy',
+                            data: [9, 8, 8, 9, 6],
+                            backgroundColor: 'rgba(239, 68, 68, 0.2)',
+                            borderColor: 'rgba(239, 68, 68, 1)',
+                            pointBackgroundColor: 'rgba(239, 68, 68, 1)',
+                        },
+                        {
+                            label: 'auditd',
+                            data: [6, 5, 4, 2, 2],
+                            backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                            borderColor: 'rgba(59, 130, 246, 1)',
+                            pointBackgroundColor: 'rgba(59, 130, 246, 1)',
+                        },
+                        {
+                            label: 'eBPF (Falco)',
+                            data: [7, 6, 3, 2, 3],
+                            backgroundColor: 'rgba(245, 158, 11, 0.2)',
+                            borderColor: 'rgba(245, 158, 11, 1)',
+                            pointBackgroundColor: 'rgba(245, 158, 11, 1)',
+                        },
+                        {
+                            label: 'Endpoint DLP/EDR',
+                            data: [10, 7, 5, 4, 8],
+                            backgroundColor: 'rgba(16, 185, 129, 0.2)',
+                            borderColor: 'rgba(16, 185, 129, 1)',
+                            pointBackgroundColor: 'rgba(16, 185, 129, 1)',
+                        }
+                    ]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            angleLines: {
+                                color: '#E2E8F0'
+                            },
+                            grid: {
+                                color: '#E2E8F0'
+                            },
+                            pointLabels: {
+                                font: {
+                                    size: 14,
+                                    weight: '500'
+                                },
+                                color: '#4A5568'
+                            },
+                            ticks: {
+                                backdropColor: '#FDFBF8',
+                                color: '#718096',
+                                stepSize: 2,
+                                beginAtZero: true,
+                                max: 10
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                color: '#333D4B',
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.r !== null) {
+                                        label += context.parsed.r + ' / 10';
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

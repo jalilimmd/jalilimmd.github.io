@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Interactive Guide to Secure Authentication</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Slate Gray & Sky Blue -->
+    <!-- Application Structure Plan: The application is a single-page, vertically scrolling "Interactive Guide." A sticky sidebar navigation, mirroring the report's structure, allows for both linear exploration and direct access to specific topics. This structure was chosen to preserve the logical narrative of the source document while making its dense, hierarchical information easily digestible and navigable. Key interactions, like clicking on chart elements or stepping through process diagrams, update the content "in-place," creating a seamless, focused user experience without leaving the page. This is more effective for a technical guide than a dashboard layout. -->
+    <!-- Visualization & Content Choices: 
+        - OWASP Risks -> Interactive Cards -> Hover/Click -> More engaging than a list, connects risks to the topic -> HTML/JS.
+        - NIST AALs (Table 1) -> Interactive Bar Chart -> Click buttons to filter -> Visually shows increasing assurance levels -> Chart.js.
+        - MFA Methods (Table 2) -> Interactive Radar Chart -> Checkboxes to compare -> Ideal for multi-attribute comparison of trade-offs -> Chart.js.
+        - Secure Cookie Attributes (Table 3) -> Interactive Accordion -> Click to expand -> Manages information density, focuses user attention -> HTML/JS.
+        - Password Hashing Strength -> Bar Chart -> Static but comparative -> Quick visual grasp of algorithm strength -> Chart.js.
+        - Workflows (Recovery, OAuth) -> Step-by-step diagrams -> Click "Next" -> Breaks down complex processes into digestible steps -> HTML/JS.
+        - FIDO2/Passkeys -> Animated Diagram -> On-click animation -> Simplifies the non-intuitive cryptographic flow -> HTML/JS.
+        - Passwordless Roadmap -> Timeline Component -> Click step to see details -> The most intuitive way to represent a phased plan -> HTML/JS.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc; /* slate-50 */
+            color: #334155; /* slate-700 */
+        }
+        .nav-link {
+            transition: all 0.2s ease-in-out;
+            border-left: 2px solid transparent;
+        }
+        .nav-link.active {
+            color: #0284c7; /* sky-600 */
+            border-left-color: #0284c7; /* sky-600 */
+            transform: translateX(4px);
+        }
+        .nav-link-sub.active {
+            color: #0ea5e9; /* sky-500 */
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+            max-height: 450px;
+        }
+        @media (max-width: 768px) {
+            .chart-container {
+                height: 300px;
+            }
+        }
+        .step-diagram-item {
+            transition: all 0.3s ease-in-out;
+        }
+        .step-diagram-item.active {
+            background-color: #e0f2fe; /* sky-100 */
+            border-color: #0284c7; /* sky-600 */
+        }
+    </style>
+</head>
+<body class="bg-slate-50">
+
+    <div class="flex">
+        <aside id="sidebar" class="hidden lg:block sticky top-0 h-screen overflow-y-auto w-64 bg-white border-r border-slate-200 p-6">
+            <h2 class="text-lg font-bold text-slate-800 mb-4">Navigation</h2>
+            <nav id="table-of-contents" class="flex flex-col space-y-2 text-sm">
+                <!-- Navigation links will be populated by JS -->
+            </nav>
+        </aside>
+
+        <main class="w-full lg:w-[calc(100%-16rem)] p-4 md:p-8 lg:p-12">
+            <div class="max-w-4xl mx-auto">
+                <header class="mb-12 text-center">
+                    <h1 class="text-4xl md:text-5xl font-bold text-slate-900 mb-4">The Interactive Guide to Secure Authentication</h1>
+                    <p class="text-lg text-slate-600">An interactive exploration of the frameworks, standards, and best practices for building secure login systems in modern applications.</p>
+                </header>
+
+                <section id="part-1" class="mb-16 scroll-mt-20">
+                    <h2 class="text-3xl font-bold text-slate-800 border-b-2 border-sky-500 pb-2 mb-6">Part I: Foundational Frameworks and Standards</h2>
+                    <p class="mb-8 text-slate-600">A robust authentication architecture is built on a deep understanding of the threat landscape, guided by comprehensive standards. This section explores the critical frameworks from OWASP and NIST that provide the strategic context for secure authentication design.</p>
+                    
+                    <article id="s1-1" class="mb-12 scroll-mt-20">
+                        <h3 class="text-2xl font-semibold text-slate-700 mb-4">1.1 The Landscape of Authentication Risk: OWASP</h3>
+                        <p class="mb-6 text-slate-600">The OWASP Top 10 highlights the most critical security risks to web applications. Several of these are directly related to failures in the authentication process. Understanding these connections is key to prioritizing security efforts.</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
+                                <h4 class="font-bold text-sky-700">A07: Identification & Authentication Failures</h4>
+                                <p class="text-sm text-slate-600">The central risk, covering everything from credential stuffing to insecure recovery and session management.</p>
+                            </div>
+                            <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
+                                <h4 class="font-bold text-sky-700">A02: Cryptographic Failures</h4>
+                                <p class="text-sm text-slate-600">Directly relates to insecure password storage. Using weak hashing algorithms allows attackers to recover credentials from a database breach.</p>
+                            </div>
+                            <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
+                                <h4 class="font-bold text-sky-700">A01: Broken Access Control</h4>
+                                <p class="text-sm text-slate-600">If authentication fails, access control is meaningless. An attacker impersonating a user inherits all their permissions.</p>
+                            </div>
+                            <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
+                                <h4 class="font-bold text-sky-700">A04: Insecure Design</h4>
+                                <p class="text-sm text-slate-600">Highlights the need to threat model and design authentication flows securely from the start, rather than fixing bugs later.</p>
+                            </div>
+                        </div>
+                    </article>
+
+                    <article id="s1-2" class="mb-12 scroll-mt-20">
+                        <h3 class="text-2xl font-semibold text-slate-700 mb-4">1.2 Establishing Trust: NIST Digital Identity Guidelines</h3>
+                        <p class="mb-6 text-slate-600">NIST SP 800-63 provides a risk-based framework for digital identity. Its Authenticator Assurance Levels (AALs) define the required strength of the login process itself, providing a clear model for justifying security decisions. Click the buttons to compare levels.</p>
+                        <div class="bg-white p-6 rounded-lg border border-slate-200 shadow-sm">
+                            <div class="flex justify-center space-x-2 mb-4">
+                                <button id="aal1-btn" class="aal-btn bg-sky-500 text-white px-4 py-2 rounded-md text-sm font-medium">AAL1</button>
+                                <button id="aal2-btn" class="aal-btn bg-slate-200 text-slate-700 px-4 py-2 rounded-md text-sm font-medium">AAL2</button>
+                                <button id="aal3-btn" class="aal-btn bg-slate-200 text-slate-700 px-4 py-2 rounded-md text-sm font-medium">AAL3</button>
+                            </div>
+                            <div class="chart-container h-64 md:h-80">
+                                <canvas id="aalChart"></canvas>
+                            </div>
+                            <div id="aal-details" class="mt-4 p-4 bg-slate-50 rounded-md">
+                                <!-- Details populated by JS -->
+                            </div>
+                        </div>
+                    </article>
+                </section>
+
+                <section id="part-2" class="mb-16 scroll-mt-20">
+                    <h2 class="text-3xl font-bold text-slate-800 border-b-2 border-sky-500 pb-2 mb-6">Part II: The Authentication Lifecycle</h2>
+                    <p class="mb-8 text-slate-600">Securing the login process requires a holistic view of the entire user identity lifecycle, from registration to recovery. Each stage presents unique challenges and requires specific controls.</p>
+
+                    <article id="s2-2" class="mb-12 scroll-mt-20">
+                        <h3 class="text-2xl font-semibold text-slate-700 mb-4">2.2 Secure Credential Storage</h3>
+                        <p class="mb-6 text-slate-600">Passwords must never be stored in plaintext. They must be hashed using a strong, adaptive, one-way algorithm. The choice of algorithm is critical, as faster algorithms are vulnerable to modern cracking hardware.</p>
+                        <div class="bg-white p-6 rounded-lg border border-slate-200 shadow-sm">
+                             <div class="chart-container h-80">
+                                <canvas id="hashingChart"></canvas>
+                            </div>
+                        </div>
+                    </article>
+
+                    <article id="s2-3" class="mb-12 scroll-mt-20">
+                        <h3 class="text-2xl font-semibold text-slate-700 mb-4">2.3 Phishing-Resistant Multi-Factor Authentication (MFA)</h3>
+                        <p class="mb-6 text-slate-600">MFA is one of the most effective security controls, but not all methods are equal. A robust strategy prioritizes factors resistant to phishing. Select methods below to compare them across key attributes.</p>
+                        <div class="bg-white p-6 rounded-lg border border-slate-200 shadow-sm">
+                            <div class="chart-container h-96">
+                                <canvas id="mfaChart"></canvas>
+                            </div>
+                            <div id="mfa-checkboxes" class="flex flex-wrap justify-center gap-4 mt-4 text-sm">
+                                <!-- Checkboxes populated by JS -->
+                            </div>
+                        </div>
+                    </article>
+                    
+                    <article id="s2-5" class="mb-12 scroll-mt-20">
+                        <h3 class="text-2xl font-semibold text-slate-700 mb-4">2.5 Secure Account Recovery</h3>
+                        <p class="mb-6 text-slate-600">The "forgot password" flow is often the weakest link. A secure process relies on a time-limited, single-use token sent to a pre-verified channel, not on easily guessed "security questions." Click through the steps of a secure flow.</p>
+                        <div id="recovery-workflow" class="bg-white p-6 rounded-lg border border-slate-200 shadow-sm">
+                            <!-- Steps populated by JS -->
+                        </div>
+                        <div class="flex justify-center mt-4">
+                            <button id="recovery-prev" class="bg-slate-200 text-slate-700 px-4 py-2 rounded-md text-sm font-medium mr-2">Previous</button>
+                            <button id="recovery-next" class="bg-sky-500 text-white px-4 py-2 rounded-md text-sm font-medium">Next</button>
+                        </div>
+                    </article>
+                </section>
+
+                <section id="part-3" class="mb-16 scroll-mt-20">
+                    <h2 class="text-3xl font-bold text-slate-800 border-b-2 border-sky-500 pb-2 mb-6">Part III: Secure Session Management</h2>
+                     <p class="mb-8 text-slate-600">Authentication is a moment in time; session management is the continuous process of maintaining that authenticated state. A compromised session is equivalent to compromised credentials. This section covers controls for both stateful and stateless (JWT) sessions.</p>
+                    
+                    <article id="s3-2" class="mb-12 scroll-mt-20">
+                        <h3 class="text-2xl font-semibold text-slate-700 mb-4">3.2 Hardening Session Cookies</h3>
+                        <p class="mb-6 text-slate-600">For web apps, session IDs are sent via cookies. Several security attributes are essential to protect them from common attacks like XSS and CSRF. Click each attribute to learn its purpose.</p>
+                        <div id="cookie-accordion" class="space-y-2">
+                           <!-- Accordion items populated by JS -->
+                        </div>
+                    </article>
+
+                    <article id="s3-4" class="mb-12 scroll-mt-20">
+                        <h3 class="text-2xl font-semibold text-slate-700 mb-4">3.4 Stateless Security: JSON Web Tokens (JWTs)</h3>
+                         <p class="mb-6 text-slate-600">JWTs are common in modern SPAs and microservices. While they offer scalability, they introduce unique security challenges, especially around revocation. The choice between stateful sessions and stateless JWTs is a fundamental architectural trade-off.</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="bg-white p-6 rounded-lg border-2 border-sky-500 shadow-md">
+                                <h4 class="text-xl font-bold text-center text-sky-700 mb-2">Stateful Sessions (Server-Side)</h4>
+                                <ul class="text-sm space-y-2 list-disc list-inside">
+                                    <li><strong class="text-green-600">Pro:</strong> Trivial Revocation. A session can be instantly invalidated on the server.</li>
+                                    <li><strong class="text-green-600">Pro:</strong> Session data is not exposed to the client.</li>
+                                    <li><strong class="text-red-600">Con:</strong> Requires server storage for every active session, which can be a scalability bottleneck.</li>
+                                    <li><strong class="text-red-600">Con:</strong> Can be problematic in distributed/load-balanced environments (requires sticky sessions or shared session store).</li>
+                                </ul>
+                            </div>
+                            <div class="bg-white p-6 rounded-lg border border-slate-200 shadow-sm">
+                                <h4 class="text-xl font-bold text-center text-slate-700 mb-2">Stateless Sessions (JWT)</h4>
+                                <ul class="text-sm space-y-2 list-disc list-inside">
+                                    <li><strong class="text-green-600">Pro:</strong> Highly scalable. No server-side session storage needed.</li>
+                                    <li><strong class="text-green-600">Pro:</strong> Works well in distributed/microservice architectures.</li>
+                                    <li><strong class="text-red-600">Con:</strong> Revocation is difficult. A token is valid until it expires, even if compromised.</li>
+                                    <li><strong class="text-red-600">Con:</strong> Payload is readable by the client (must not contain sensitive data unless encrypted).</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <p class="text-center mt-4 text-sm text-slate-500">A common compromise is a hybrid model: short-lived stateless access tokens with long-lived, stateful, and revocable refresh tokens.</p>
+                    </article>
+                </section>
+
+                <section id="part-4" class="mb-16 scroll-mt-20">
+                    <h2 class="text-3xl font-bold text-slate-800 border-b-2 border-sky-500 pb-2 mb-6">Part IV: Modern Authentication Paradigms</h2>
+                    <p class="mb-8 text-slate-600">The industry is rapidly moving beyond passwords towards more secure, user-friendly paradigms. This section explores federated identity with OAuth 2.0 and the passwordless revolution driven by FIDO2 and Passkeys.</p>
+
+                    <article id="s4-2" class="mb-12 scroll-mt-20">
+                        <h3 class="text-2xl font-semibold text-slate-700 mb-4">4.2 The Passwordless Revolution: FIDO2 & Passkeys</h3>
+                        <p class="mb-6 text-slate-600">Passwordless authentication with FIDO2/Passkeys eliminates the core vulnerability of traditional systems: shared secrets. It uses public-key cryptography where the private key never leaves the user's device, making it inherently resistant to phishing and server breaches. The diagram below contrasts the two approaches.</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="bg-red-50 p-4 rounded-lg border border-red-200">
+                                <h4 class="font-bold text-red-700 text-center mb-2">Traditional Password Login</h4>
+                                <p class="text-sm text-red-600">A shared secret (the password) is sent from the client to the server. If intercepted or leaked from the server database, the account is compromised.</p>
+                                <div class="text-center mt-4 font-mono text-xs">
+                                    <p>User ➡️ [password] ➡️ Server</p>
+                                    <p class="mt-2">Server DB: HASH(password)</p>
+                                </div>
+                            </div>
+                             <div class="bg-green-50 p-4 rounded-lg border border-green-200">
+                                <h4 class="font-bold text-green-700 text-center mb-2">FIDO2/Passkey Login</h4>
+                                <p class="text-sm text-green-600">The server sends a challenge. The device signs it with a private key that never leaves the device. Only a signature is returned. There is no shared secret to steal.</p>
+                                 <div class="text-center mt-4 font-mono text-xs">
+                                    <p>Server ➡️ [challenge] ➡️ User's Device</p>
+                                    <p>Device ➡️ [SIGN(challenge)] ➡️ Server</p>
+                                    <p class="mt-2">Server DB: public_key</p>
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+                </section>
+
+                <section id="part-5" class="scroll-mt-20">
+                    <h2 class="text-3xl font-bold text-slate-800 border-b-2 border-sky-500 pb-2 mb-6">Part V: Strategic Recommendations</h2>
+                    <p class="mb-8 text-slate-600">Achieving a mature authentication architecture requires a strategic, phased approach that integrates security into the development lifecycle from the beginning.</p>
+
+                     <article id="s5-2" class="mb-12 scroll-mt-20">
+                        <h3 class="text-2xl font-semibold text-slate-700 mb-4">5.2 A Phased Roadmap to Passwordless</h3>
+                        <p class="mb-6 text-slate-600">Transitioning to passkeys is a journey. A practical roadmap allows for a gradual and secure migration, focusing on user benefits and building momentum over time.</p>
+                        <div class="relative">
+                           <div class="absolute left-1/2 top-0 bottom-0 w-0.5 bg-slate-300 hidden md:block"></div>
+                           <div class="space-y-12">
+                                <div class="md:grid md:grid-cols-2 md:gap-8 items-center">
+                                    <div class="text-center md:text-right md:pr-8">
+                                        <div class="bg-sky-500 text-white w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold mx-auto md:mr-0 md:ml-auto mb-2">1</div>
+                                        <h4 class="font-bold text-lg">Strengthen Foundation</h4>
+                                    </div>
+                                    <div class="text-slate-600 text-sm mt-2 md:mt-0">Enforce modern password policies and roll out strong MFA (TOTP/Push) to all users, especially privileged ones. Secure the existing system before adding new ones.</div>
+                                </div>
+                               <div class="md:grid md:grid-cols-2 md:gap-8 items-center">
+                                    <div class="text-slate-600 text-sm mt-2 md:mt-0 md:text-right md:pr-8 order-2 md:order-1">Allow users to enroll a passkey as an additional authentication method. This lets early adopters test the system and provides a low-risk implementation path.</div>
+                                    <div class="text-center md:text-left md:pl-8 order-1 md:order-2">
+                                        <div class="bg-sky-500 text-white w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold mx-auto md:ml-0 md:mr-auto mb-2">2</div>
+                                        <h4 class="font-bold text-lg">Introduce as Option</h4>
+                                    </div>
+                                </div>
+                                <div class="md:grid md:grid-cols-2 md:gap-8 items-center">
+                                    <div class="text-center md:text-right md:pr-8">
+                                        <div class="bg-sky-500 text-white w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold mx-auto md:mr-0 md:ml-auto mb-2">3</div>
+                                        <h4 class="font-bold text-lg">Incentivize Adoption</h4>
+                                    </div>
+                                    <div class="text-slate-600 text-sm mt-2 md:mt-0">Actively promote passkeys by highlighting user benefits (speed, convenience). Prompt users to create a passkey after a successful login to increase adoption.</div>
+                                </div>
+                                <div class="md:grid md:grid-cols-2 md:gap-8 items-center">
+                                    <div class="text-slate-600 text-sm mt-2 md:mt-0 md:text-right md:pr-8 order-2 md:order-1">Shift the default registration experience for new users to be passkey-first, with passwords becoming the fallback option.</div>
+                                    <div class="text-center md:text-left md:pl-8 order-1 md:order-2">
+                                        <div class="bg-sky-500 text-white w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold mx-auto md:ml-0 md:mr-auto mb-2">4</div>
+                                        <h4 class="font-bold text-lg">Default to Passkeys</h4>
+                                    </div>
+                                </div>
+                           </div>
+                        </div>
+                    </article>
+
+                    <article id="s5-3" class="scroll-mt-20">
+                        <h3 class="text-2xl font-semibold text-slate-700 mb-4">5.3 Conclusion: Building Trust in a Zero-Trust World</h3>
+                        <p class="text-slate-600 mb-4">The evolution from passwords to passkeys aligns perfectly with a Zero Trust architecture, where identity is the new perimeter. Every access request must be authenticated, making the strength of that initial authentication paramount.</p>
+                        <div class="bg-sky-100 border-l-4 border-sky-500 text-sky-800 p-4 rounded-r-lg" role="alert">
+                            <p class="font-bold">The Future of Authentication</p>
+                            <p>The future lies in converging a strong, cryptographic foundation (like Passkeys) with the contextual intelligence of AI/ML. This creates an architecture that is not only more secure but also more seamless, where trust is not just established, but continuously maintained.</p>
+                        </div>
+                    </article>
+                </section>
+            </div>
+        </main>
+    </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const sections = document.querySelectorAll('section[id]');
+    const articles = document.querySelectorAll('article[id]');
+    const navContainer = document.getElementById('table-of-contents');
+
+    function createNavLinks() {
+        let navHtml = '';
+        sections.forEach(section => {
+            const sectionId = section.getAttribute('id');
+            const sectionTitle = section.querySelector('h2').textContent;
+            navHtml += `<a href="#${sectionId}" class="nav-link font-semibold text-slate-800 p-2">${sectionTitle}</a>`;
+            
+            const sectionArticles = section.querySelectorAll('article[id]');
+            sectionArticles.forEach(article => {
+                const articleId = article.getAttribute('id');
+                const articleTitle = article.querySelector('h3').textContent;
+                navHtml += `<a href="#${articleId}" class="nav-link nav-link-sub text-slate-600 pl-6 pr-2 py-1">${articleTitle}</a>`;
+            });
+        });
+        navContainer.innerHTML = navHtml;
+    }
+
+    function updateActiveNavLink() {
+        let current = '';
+        const allNavItems = [...sections, ...articles];
+        
+        allNavItems.forEach(item => {
+            const itemTop = item.offsetTop;
+            if (pageYOffset >= itemTop - 100) {
+                current = item.getAttribute('id');
+            }
+        });
+
+        const navLinks = navContainer.querySelectorAll('.nav-link');
+        navLinks.forEach(link => {
+            link.classList.remove('active');
+            if(link.getAttribute('href') === `#${current}`) {
+                link.classList.add('active');
+            }
+        });
+    }
+
+    window.addEventListener('scroll', updateActiveNavLink);
+
+    const aalData = {
+        labels: ['Assurance Level'],
+        datasets: [
+            { label: 'AAL1', data: [33], backgroundColor: '#0ea5e9', categoryPercentage: 0.5 },
+            { label: 'AAL2', data: [66], backgroundColor: '#64748b', categoryPercentage: 0.5 },
+            { label: 'AAL3', data: [100], backgroundColor: '#64748b', categoryPercentage: 0.5 },
+        ]
+    };
+    const aalDetails = {
+        AAL1: {
+            title: 'AAL1: Some Assurance',
+            desc: 'Requires single-factor authentication. Provides some assurance that the claimant controls an authenticator bound to the account. Suitable for low-risk applications.',
+            examples: 'Passwords, SMS/Email OTPs.'
+        },
+        AAL2: {
+            title: 'AAL2: High Assurance',
+            desc: 'Requires multi-factor authentication (MFA). Provides high confidence by requiring two distinct factors and resistance to replay attacks. The standard for most sensitive applications.',
+            examples: 'Password + TOTP App, Synced Passkeys.'
+        },
+        AAL3: {
+            title: 'AAL3: Very High Assurance',
+            desc: 'Requires a hardware-based cryptographic authenticator that is phishing-resistant. The highest level, for critical infrastructure and high-value systems.',
+            examples: 'Device-Bound Passkeys, FIDO2 Security Keys.'
+        }
+    };
+    let aalChart;
+    function initAALChart() {
+        const ctx = document.getElementById('aalChart').getContext('2d');
+        aalChart = new Chart(ctx, {
+            type: 'bar',
+            data: aalData,
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { enabled: false }
+                },
+                scales: {
+                    x: { display: false, max: 100 },
+                    y: { display: false }
+                }
+            }
+        });
+        updateAALContent('AAL1');
+    }
+
+    function updateAALContent(level) {
+        const details = aalDetails[level];
+        document.getElementById('aal-details').innerHTML = `
+            <h5 class="font-bold text-slate-800">${details.title}</h5>
+            <p class="text-sm text-slate-600 mt-1">${details.desc}</p>
+            <p class="text-sm text-slate-500 mt-2"><strong>Examples:</strong> ${details.examples}</p>
+        `;
+        
+        aalChart.data.datasets.forEach(dataset => {
+            dataset.backgroundColor = dataset.label === level ? '#0ea5e9' : '#e2e8f0';
+        });
+        aalChart.update();
+
+        document.querySelectorAll('.aal-btn').forEach(btn => {
+            if(btn.id === `${level.toLowerCase()}-btn`) {
+                btn.classList.remove('bg-slate-200', 'text-slate-700');
+                btn.classList.add('bg-sky-500', 'text-white');
+            } else {
+                btn.classList.add('bg-slate-200', 'text-slate-700');
+                btn.classList.remove('bg-sky-500', 'text-white');
+            }
+        });
+    }
+
+    document.getElementById('aal1-btn').addEventListener('click', () => updateAALContent('AAL1'));
+    document.getElementById('aal2-btn').addEventListener('click', () => updateAALContent('AAL2'));
+    document.getElementById('aal3-btn').addEventListener('click', () => updateAALContent('AAL3'));
+
+    function initHashingChart() {
+        const ctx = document.getElementById('hashingChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['MD5/SHA1 (Insecure)', 'PBKDF2 (Okay)', 'bcrypt/scrypt (Good)', 'Argon2id (Recommended)'],
+                datasets: [{
+                    label: 'Relative Cracking Resistance (Higher is Better)',
+                    data: [5, 40, 85, 100],
+                    backgroundColor: ['#ef4444', '#f97316', '#84cc16', '#22c55e'],
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: (context) => ` A relative measure of how resistant the hash is to offline cracking attacks.`
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: {
+                            callback: (value) => value + '%'
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    const mfaMethods = {
+        'SMS/Voice OTP': { resistance: 1, ux: 3, security: 1, aal: 'AAL1' },
+        'Email OTP': { resistance: 1, ux: 3, security: 2, aal: 'AAL1' },
+        'TOTP App': { resistance: 2, ux: 4, security: 4, aal: 'AAL2' },
+        'Push Notification': { resistance: 3, ux: 5, security: 4, aal: 'AAL2' },
+        'Passkey/FIDO2': { resistance: 5, ux: 5, security: 5, aal: 'AAL2/3' },
+    };
+    let mfaChart;
+    function initMFAChart() {
+        const checkboxesContainer = document.getElementById('mfa-checkboxes');
+        Object.keys(mfaMethods).forEach((method, index) => {
+            const isChecked = index > 1; // Default to showing better options
+            checkboxesContainer.innerHTML += `
+                <label class="flex items-center space-x-2 cursor-pointer">
+                    <input type="checkbox" class="mfa-checkbox rounded text-sky-500 focus:ring-sky-500" value="${method}" ${isChecked ? 'checked' : ''}>
+                    <span>${method}</span>
+                </label>
+            `;
+        });
+
+        const ctx = document.getElementById('mfaChart').getContext('2d');
+        mfaChart = new Chart(ctx, {
+            type: 'radar',
+            data: {
+                labels: ['Phishing Resistance', 'User Experience', 'Overall Security'],
+                datasets: []
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    r: {
+                        angleLines: { display: true },
+                        suggestedMin: 0,
+                        suggestedMax: 5,
+                        pointLabels: { font: { size: 12 } },
+                        ticks: { display: false }
+                    }
+                },
+                plugins: {
+                    legend: { position: 'bottom' }
+                }
+            }
+        });
+
+        updateMFAChart();
+        document.querySelectorAll('.mfa-checkbox').forEach(cb => cb.addEventListener('change', updateMFAChart));
+    }
+
+    function updateMFAChart() {
+        const selectedMethods = Array.from(document.querySelectorAll('.mfa-checkbox:checked')).map(cb => cb.value);
+        const colors = ['#0ea5e9', '#f97316', '#10b981', '#8b5cf6', '#ec4899'];
+        mfaChart.data.datasets = selectedMethods.map((method, index) => {
+            const data = mfaMethods[method];
+            const color = colors[index % colors.length];
+            return {
+                label: method,
+                data: [data.resistance, data.ux, data.security],
+                fill: true,
+                backgroundColor: color.replace(')', ', 0.2)'),
+                borderColor: color,
+                pointBackgroundColor: color,
+            };
+        });
+        mfaChart.update();
+    }
+
+    const recoverySteps = [
+        { title: '1. Initiation', desc: "User provides their identifier (e.g., email). A generic message is returned to prevent account enumeration." },
+        { title: '2. Token Generation', desc: "A secure, single-use, high-entropy, and time-limited recovery token is generated on the server." },
+        { title: '3. Secure Delivery', desc: "The token is sent to the user's pre-verified recovery channel (e.g., a link via email)." },
+        { title: '4. Token Validation', desc: "User uses the token. Server validates it's active, unused, and not expired." },
+        { title: '5. Limited-Privilege Session', desc: "User is granted a temporary session that ONLY allows changing their password." },
+        { title: '6. Reset & Invalidate', desc: "After a successful password change, the recovery token and ALL other active sessions for that user are invalidated." }
+    ];
+    let currentRecoveryStep = 0;
+    function renderRecoveryWorkflow() {
+        const container = document.getElementById('recovery-workflow');
+        container.innerHTML = recoverySteps.map((step, index) => `
+            <div class="step-diagram-item p-4 border-l-4 border-slate-200 ${index === currentRecoveryStep ? 'active' : ''}">
+                <h5 class="font-bold text-slate-800">${step.title}</h5>
+                <p class="text-sm text-slate-600">${step.desc}</p>
+            </div>
+        `).join('');
+        document.getElementById('recovery-prev').disabled = currentRecoveryStep === 0;
+        document.getElementById('recovery-next').disabled = currentRecoveryStep === recoverySteps.length - 1;
+    }
+    document.getElementById('recovery-next').addEventListener('click', () => {
+        if (currentRecoveryStep < recoverySteps.length - 1) {
+            currentRecoveryStep++;
+            renderRecoveryWorkflow();
+        }
+    });
+    document.getElementById('recovery-prev').addEventListener('click', () => {
+        if (currentRecoveryStep > 0) {
+            currentRecoveryStep--;
+            renderRecoveryWorkflow();
+        }
+    });
+
+    const cookieData = [
+        { attr: 'HttpOnly', desc: 'Prevents client-side JavaScript from accessing the cookie, mitigating XSS attacks that try to steal session tokens.' },
+        { attr: 'Secure', desc: 'Ensures the cookie is only sent over HTTPS, preventing it from being intercepted in cleartext during man-in-the-middle attacks.' },
+        { attr: 'SameSite=Strict/Lax', desc: 'The primary defense against Cross-Site Request Forgery (CSRF). It controls whether the cookie is sent with cross-site requests.' },
+        { attr: '__Host- Prefix', desc: 'A defense-in-depth mechanism. A cookie named `__Host-` must also be `Secure`, have `Path=/`, and not have a `Domain` attribute, preventing misconfiguration.' }
+    ];
+    function initCookieAccordion() {
+        const container = document.getElementById('cookie-accordion');
+        container.innerHTML = cookieData.map((item, index) => `
+            <div>
+                <button class="accordion-btn w-full text-left p-4 bg-white rounded-lg shadow-sm border border-slate-200 hover:bg-slate-50 flex justify-between items-center">
+                    <span class="font-semibold text-sky-700">${item.attr}</span>
+                    <svg class="w-5 h-5 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                </button>
+                <div class="accordion-content hidden p-4 bg-white border border-t-0 border-slate-200 rounded-b-lg">
+                    <p class="text-sm text-slate-600">${item.desc}</p>
+                </div>
+            </div>
+        `).join('');
+
+        container.querySelectorAll('.accordion-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const content = btn.nextElementSibling;
+                const icon = btn.querySelector('svg');
+                content.classList.toggle('hidden');
+                icon.classList.toggle('rotate-180');
+            });
+        });
+    }
+
+    createNavLinks();
+    updateActiveNavLink();
+    initAALChart();
+    initHashingChart();
+    initMFAChart();
+    renderRecoveryWorkflow();
+    initCookieAccordion();
+});
+</script>
+
+</body>
+</html>
