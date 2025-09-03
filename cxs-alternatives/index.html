@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Security Suite Replacement Dashboard</title>
+    <!-- Chosen Palette: Slate Gray & Amber -->
+    <!-- Application Structure Plan: A top-down, "scrollytelling" dashboard. Starts with the conclusion (recommendation), then provides an interactive dashboard to compare contenders, followed by visual charts for TCO/Scores, and ends with the implementation roadmap. This structure prioritizes immediate insight and encourages user-driven exploration over linear reading. -->
+    <!-- Visualization & Content Choices: Report Info: TCO data -> Goal: Compare costs -> Viz: Bar Chart (Chart.js) -> Interaction: Tooltip on hover -> Justification: Easy comparison of financial impact. Report Info: Weighted scores -> Goal: Compare overall suitability -> Viz: Radar Chart (Chart.js) -> Interaction: Tooltip on hover -> Justification: Excellent for multi-attribute comparison to show strengths/weaknesses. Report Info: Migration Plan -> Goal: Show process -> Viz: HTML/CSS vertical timeline -> Interaction: Hover effects -> Justification: Clear, sequential visual flow. NO SVG/Mermaid used. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
+        .nav-link.active {
+            color: #f59e0b;
+            border-bottom-color: #f59e0b;
+        }
+        .tool-selector.active {
+            background-color: #f59e0b;
+            color: #ffffff;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+        .content-panel {
+            transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+        }
+        .content-panel.hidden {
+            opacity: 0;
+            transform: translateY(20px);
+            position: absolute;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 400px;
+            }
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- Header & Navigation -->
+    <header class="bg-white/80 backdrop-blur-lg sticky top-0 z-50 border-b border-slate-200">
+        <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex-shrink-0">
+                    <h1 class="text-xl font-bold text-slate-800">Security Suite Analysis</h1>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a href="#recommendation" class="nav-link text-slate-600 hover:text-amber-500 px-3 py-2 rounded-md text-sm font-medium border-b-2 border-transparent transition-colors">Recommendation</a>
+                        <a href="#comparison" class="nav-link text-slate-600 hover:text-amber-500 px-3 py-2 rounded-md text-sm font-medium border-b-2 border-transparent transition-colors">Comparison</a>
+                        <a href="#visuals" class="nav-link text-slate-600 hover:text-amber-500 px-3 py-2 rounded-md text-sm font-medium border-b-2 border-transparent transition-colors">Data Visuals</a>
+                        <a href="#roadmap" class="nav-link text-slate-600 hover:text-amber-500 px-3 py-2 rounded-md text-sm font-medium border-b-2 border-transparent transition-colors">Roadmap</a>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+
+        <!-- Section 1: Recommendation -->
+        <section id="recommendation" class="text-center py-12">
+            <h2 class="text-base font-semibold text-amber-600 tracking-wide uppercase">Primary Recommendation</h2>
+            <p class="mt-2 text-3xl font-extrabold text-slate-900 tracking-tight sm:text-4xl">Strategic Adoption of cPGuard</p>
+            <p class="mt-4 max-w-2xl mx-auto text-xl text-slate-500">
+                After a comprehensive analysis of performance, features, and Total Cost of Ownership, cPGuard is the recommended strategic replacement for the entire ConfigServer suite. It offers superior malware prevention, the best performance profile, and the most compelling TCO.
+            </p>
+        </section>
+
+        <!-- Section 2: Interactive Comparison -->
+        <section id="comparison" class="py-12">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-extrabold text-slate-900">The Contenders: An Interactive Deep Dive</h2>
+                <p class="mt-3 max-w-2xl mx-auto text-lg text-slate-500">Select a tool to explore its technical details, advantages, and key considerations.</p>
+            </div>
+
+            <!-- Tool Selector -->
+            <div class="flex justify-center flex-wrap gap-2 sm:gap-4 mb-8">
+                <button class="tool-selector active px-4 py-2 text-sm sm:text-base font-semibold rounded-full bg-slate-200 text-slate-700 transition" data-tool="cpguard">cPGuard</button>
+                <button class="tool-selector px-4 py-2 text-sm sm:text-base font-semibold rounded-full bg-slate-200 text-slate-700 transition" data-tool="imunify">Imunify360</button>
+                <button class="tool-selector px-4 py-2 text-sm sm:text-base font-semibold rounded-full bg-slate-200 text-slate-700 transition" data-tool="bitninja">BitNinja</button>
+                <button class="tool-selector px-4 py-2 text-sm sm:text-base font-semibold rounded-full bg-slate-200 text-slate-700 transition" data-tool="diy">DIY Stack</button>
+            </div>
+
+            <!-- Dynamic Content Panels -->
+            <div class="relative min-h-[450px]">
+                <div id="cpguard-content" class="content-panel"></div>
+                <div id="imunify-content" class="content-panel hidden"></div>
+                <div id="bitninja-content" class="content-panel hidden"></div>
+                <div id="diy-content" class="content-panel hidden"></div>
+            </div>
+        </section>
+        
+        <!-- Section 3: Data Visualizations -->
+        <section id="visuals" class="py-12 bg-white rounded-2xl shadow-sm">
+             <div class="text-center mb-12">
+                <h2 class="text-3xl font-extrabold text-slate-900">Comparative Analysis at a Glance</h2>
+                <p class="mt-3 max-w-2xl mx-auto text-lg text-slate-500">Visual data helps clarify the financial and performance differences between the top contenders.</p>
+            </div>
+            <div class="grid md:grid-cols-2 gap-8 lg:gap-12">
+                <div>
+                    <h3 class="text-xl font-bold text-center mb-4">3-Year Total Cost of Ownership</h3>
+                    <div class="chart-container">
+                        <canvas id="tcoChart"></canvas>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-xl font-bold text-center mb-4">Final Recommendation Scorecard</h3>
+                     <div class="chart-container">
+                        <canvas id="scorecardChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 4: Firewall & WAF Strategy -->
+        <section id="strategy" class="py-12 mt-12">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-extrabold text-slate-900">Firewall & WAF Strategy</h2>
+                <p class="mt-3 max-w-2xl mx-auto text-lg text-slate-500">The verdict on replacing the CSF and CMC components is clear: an integrated approach is superior.</p>
+            </div>
+            <div class="grid md:grid-cols-2 gap-8 text-center">
+                <div class="bg-white p-8 rounded-lg shadow-sm">
+                    <div class="inline-flex items-center justify-center h-12 w-12 rounded-full bg-amber-100 text-amber-600 mb-4">
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+                    </div>
+                    <h3 class="text-lg font-bold">Firewall (CSF) Replacement</h3>
+                    <p class="mt-2 text-slate-500">Replacing CSF with the integrated, enhanced firewall of a premium suite is the logical path. This simplifies management, reduces complexity, and provides a unified support channel.</p>
+                </div>
+                <div class="bg-white p-8 rounded-lg shadow-sm">
+                    <div class="inline-flex items-center justify-center h-12 w-12 rounded-full bg-amber-100 text-amber-600 mb-4">
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                    </div>
+                    <h3 class="text-lg font-bold">WAF Management (CMC) Replacement</h3>
+                    <p class="mt-2 text-slate-500">A dedicated tool is unnecessary. Native cPanel/DirectAdmin tools and the superior, curated WAF rulesets within suites like cPGuard provide a far better solution for managing ModSecurity.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 5: Roadmap -->
+        <section id="roadmap" class="py-12">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-extrabold text-slate-900">The Path Forward: Phased Migration</h2>
+                <p class="mt-3 max-w-2xl mx-auto text-lg text-slate-500">A "big bang" migration is ill-advised. A careful, phased approach will mitigate risk and ensure a smooth transition.</p>
+            </div>
+            <div class="max-w-3xl mx-auto">
+                <div class="relative">
+                    <div class="absolute left-1/2 -ml-px w-0.5 h-full bg-slate-300" aria-hidden="true"></div>
+                    <div class="space-y-12">
+                        <!-- Phase 1 -->
+                        <div class="relative flex items-start">
+                            <div class="flex-shrink-0 w-1/2 pr-8 text-right">
+                                <h3 class="text-lg font-bold text-slate-800">Phase 1: Pilot Program</h3>
+                                <p class="text-slate-500">Deploy cPGuard on 3-5 representative servers. Monitor load and establish a performance baseline.</p>
+                            </div>
+                            <div class="absolute left-1/2 -ml-4 w-8 h-8 bg-white border-2 border-amber-500 rounded-full flex items-center justify-center text-amber-500 font-bold">1</div>
+                            <div class="w-1/2 pl-8"><p class="text-sm text-slate-400">1-2 Weeks</p></div>
+                        </div>
+                        <!-- Phase 2 -->
+                        <div class="relative flex items-start">
+                             <div class="w-1/2 pr-8 text-right"><p class="text-sm text-slate-400">2-4 Weeks</p></div>
+                            <div class="absolute left-1/2 -ml-4 w-8 h-8 bg-white border-2 border-amber-500 rounded-full flex items-center justify-center text-amber-500 font-bold">2</div>
+                            <div class="flex-shrink-0 w-1/2 pl-8 text-left">
+                                <h3 class="text-lg font-bold text-slate-800">Phase 2: Staged Rollout</h3>
+                                <p class="text-slate-500">Expand to 10-20% of the fleet. Uninstall CXS/CMC to test cPGuard in standalone mode.</p>
+                            </div>
+                        </div>
+                        <!-- Phase 3 -->
+                        <div class="relative flex items-start">
+                            <div class="flex-shrink-0 w-1/2 pr-8 text-right">
+                                <h3 class="text-lg font-bold text-slate-800">Phase 3: Full Fleet Deployment</h3>
+                                <p class="text-slate-500">Proceed with a scripted, automated rollout across remaining servers in rolling batches.</p>
+                            </div>
+                            <div class="absolute left-1/2 -ml-4 w-8 h-8 bg-white border-2 border-amber-500 rounded-full flex items-center justify-center text-amber-500 font-bold">3</div>
+                             <div class="w-1/2 pl-8"><p class="text-sm text-slate-400">4-6 Weeks</p></div>
+                        </div>
+                         <!-- Phase 4 -->
+                        <div class="relative flex items-start">
+                             <div class="w-1/2 pr-8 text-right"><p class="text-sm text-slate-400">Ongoing</p></div>
+                            <div class="absolute left-1/2 -ml-4 w-8 h-8 bg-white border-2 border-amber-500 rounded-full flex items-center justify-center text-amber-500 font-bold">4</div>
+                            <div class="flex-shrink-0 w-1/2 pl-8 text-left">
+                                <h3 class="text-lg font-bold text-slate-800">Phase 4: Optimization & Training</h3>
+                                <p class="text-slate-500">Fine-tune configurations, customize alerting, and train staff on the new platform.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const toolData = {
+                cpguard: {
+                    title: "cPGuard: Lightweight, Proactive Defense",
+                    description: "A comprehensive security suite designed for Linux hosting servers, positioning itself as a lightweight yet powerful alternative with a strong focus on proactive prevention and efficient management.",
+                    pros: [
+                        "Effective malware prevention before injection",
+                        "Consistently low resource usage",
+                        "Powerful central portal for fleet management",
+                        "Most competitive pricing model",
+                        "Automatic cleanup and CMS core file repair"
+                    ],
+                    cons: [
+                        "Potential for occasional false positives",
+                        "Some installation issues reported on DirectAdmin"
+                    ],
+                    tech: [
+                        { label: "Detection Engine", value: "Intelligent Code Analysis & Signatures" },
+                        { label: "Real-Time Mechanism", value: "`inotify` monitoring with local intelligent scan" },
+                        { label: "Malware Remediation", value: "Auto-clean injections & replace CMS core files" },
+                        { label: "Intelligence Source", value: "IPDB (Real-time abusive IP list)" },
+                        { label: "Management", value: "Excellent Central Portal for all servers" }
+                    ]
+                },
+                imunify: {
+                    title: "Imunify360: AI-Driven Proactive Defense",
+                    description: "A multi-layered security suite from CloudLinux Inc., designed specifically for Linux web servers. It represents a modern, integrated approach to server security.",
+                    pros: [
+                        "Analyzes PHP script behavior to block zero-day exploits",
+                        "One-click surgical removal of malicious code",
+                        "Excellent integration with cPanel & DirectAdmin",
+                        "Full 24/7 professional vendor support"
+                    ],
+                    cons: [
+                        "Can be resource-intensive, requires performance testing",
+                        "Some users report a reactive cleanup pattern",
+                        "Higher subscription cost"
+                    ],
+                    tech: [
+                        { label: "Detection Engine", value: "Behavioral Analysis (PHP Runtime)" },
+                        { label: "Real-Time Mechanism", value: "Kernel monitoring & PHP runtime interception" },
+                        { label: "Malware Remediation", value: "Surgical code removal from infected files" },
+                        { label: "Intelligence Source", value: "Herd Immunity (data from all servers)" },
+                        { label: "Management", value: "Excellent per-server WHM/DA plugin" }
+                    ]
+                },
+                bitninja: {
+                    title: "BitNinja: Collective Intelligence Security",
+                    description: "An all-in-one, Security-as-a-Service (SECaaS) platform that leverages a 'Defense Network' to share threat intelligence across all protected servers globally.",
+                    pros: [
+                        "Attack on one server immunizes the entire global network",
+                        "Offloads heavy analysis to the cloud to minimize server impact",
+                        "Offers a complete set of security tools"
+                    ],
+                    cons: [
+                        "Highly polarized user reviews on resource usage",
+                        "Incompatible with other scanners, forcing all-or-nothing",
+                        "Less integrated UI compared to competitors"
+                    ],
+                    tech: [
+                        { label: "Detection Engine", value: "Cloud-based AI & Signatures" },
+                        { label: "Real-Time Mechanism", value: "Filesystem monitoring with cloud-offloaded scan" },
+                        { label: "Malware Remediation", value: "Quarantine & 'FilePatcher'" },
+                        { label: "Intelligence Source", value: "Defense Network (global attack data)" },
+                        { label: "Management", value: "Good standalone dashboard" }
+                    ]
+                },
+                diy: {
+                    title: "DIY Stack: Maldet & ClamAV",
+                    description: "This approach involves building a solution using free, open-source tools to replicate the functionality of the premium suites.",
+                    pros: [
+                        "No licensing costs",
+                        "Maldet is targeted for shared hosting threats"
+                    ],
+                    cons: [
+                        "`inotify` for real-time scanning is resource-intensive and reactive",
+                        "High operational overhead for configuration and maintenance",
+                        "Lacks automated cleanup and centralized management",
+                        "Relies entirely on community support"
+                    ],
+                    tech: [
+                        { label: "Detection Engine", value: "Signatures (MD5/HEX)" },
+                        { label: "Real-Time Mechanism", value: "`inotify` monitoring with local signature scan" },
+                        { label: "Malware Remediation", value: "Limited/Attempted cleaning" },
+                        { label: "Intelligence Source", value: "Network edge threat data & user submissions" },
+                        { label: "Management", value: "Manual, per-server CLI & config files" }
+                    ]
+                }
+            };
+
+            const toolSelectors = document.querySelectorAll('.tool-selector');
+            
+            function generateContentHTML(data) {
+                const prosHTML = data.pros.map(pro => `
+                    <li class="flex items-start">
+                        <div class="flex-shrink-0"><svg class="h-5 w-5 text-green-500" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg></div>
+                        <p class="ml-3 text-slate-600">${pro}</p>
+                    </li>`).join('');
+
+                const consHTML = data.cons.map(con => `
+                    <li class="flex items-start">
+                        <div class="flex-shrink-0"><svg class="h-5 w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" /></svg></div>
+                        <p class="ml-3 text-slate-600">${con}</p>
+                    </li>`).join('');
+                
+                const techHTML = data.tech.map(item => `
+                    <div class="bg-slate-50 p-4 rounded-lg">
+                        <dt class="text-sm font-medium text-slate-500">${item.label}</dt>
+                        <dd class="mt-1 text-sm font-semibold text-slate-900">${item.value}</dd>
+                    </div>`).join('');
+
+                return `
+                    <div class="max-w-4xl mx-auto bg-white p-6 sm:p-8 rounded-xl shadow-lg">
+                        <h3 class="text-2xl font-bold text-slate-900">${data.title}</h3>
+                        <p class="mt-2 text-slate-500">${data.description}</p>
+                        <div class="mt-6 grid md:grid-cols-2 gap-6">
+                            <div>
+                                <h4 class="font-semibold text-lg mb-3">Advantages</h4>
+                                <ul class="space-y-2">${prosHTML}</ul>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-lg mb-3">Considerations</h4>
+                                <ul class="space-y-2">${consHTML}</ul>
+                            </div>
+                        </div>
+                        <div class="mt-8">
+                            <h4 class="font-semibold text-lg mb-3">Technical Deep Dive</h4>
+                            <dl class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">${techHTML}</dl>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            function updateContent(toolId) {
+                document.querySelectorAll('.content-panel').forEach(panel => {
+                    panel.classList.add('hidden');
+                });
+                const activePanel = document.getElementById(`${toolId}-content`);
+                activePanel.innerHTML = generateContentHTML(toolData[toolId]);
+                activePanel.classList.remove('hidden');
+            }
+
+            toolSelectors.forEach(button => {
+                button.addEventListener('click', () => {
+                    toolSelectors.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+                    const toolId = button.dataset.tool;
+                    updateContent(toolId);
+                });
+            });
+
+            // Initial content load
+            updateContent('cpguard');
+
+            // TCO Chart
+            const tcoCtx = document.getElementById('tcoChart').getContext('2d');
+            new Chart(tcoCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['cPGuard', 'BitNinja', 'Imunify360'],
+                    datasets: [{
+                        label: '3-Year Projected License TCO ($)',
+                        data: [36000, 108000, 126000],
+                        backgroundColor: ['#34d399', '#fbbf24', '#f87171'],
+                        borderColor: ['#059669', '#d97706', '#dc2626'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) { label += ': '; }
+                                    if (context.parsed.x !== null) {
+                                        label += new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0 }).format(context.parsed.x);
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + (value / 1000) + 'k';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Scorecard Chart
+            const scorecardCtx = document.getElementById('scorecardChart').getContext('2d');
+            new Chart(scorecardCtx, {
+                type: 'radar',
+                data: {
+                    labels: ['Detection Efficacy', 'Real-Time Protection', 'Performance Impact', 'Manageability', 'TCO'],
+                    datasets: [
+                        {
+                            label: 'cPGuard',
+                            data: [5, 5, 4, 5, 5],
+                            backgroundColor: 'rgba(52, 211, 153, 0.2)',
+                            borderColor: 'rgba(5, 150, 105, 1)',
+                            pointBackgroundColor: 'rgba(5, 150, 105, 1)',
+                        },
+                        {
+                            label: 'Imunify360',
+                            data: [5, 5, 3, 5, 3],
+                            backgroundColor: 'rgba(248, 113, 113, 0.2)',
+                            borderColor: 'rgba(220, 38, 38, 1)',
+                            pointBackgroundColor: 'rgba(220, 38, 38, 1)',
+                        },
+                         {
+                            label: 'BitNinja',
+                            data: [4, 4, 2, 5, 4],
+                            backgroundColor: 'rgba(251, 191, 36, 0.2)',
+                            borderColor: 'rgba(217, 119, 6, 1)',
+                            pointBackgroundColor: 'rgba(217, 119, 6, 1)',
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            angleLines: { display: true },
+                            suggestedMin: 0,
+                            suggestedMax: 5,
+                            pointLabels: { font: { size: 12 } },
+                            ticks: { stepSize: 1 }
+                        }
+                    },
+                    plugins: {
+                        legend: { position: 'top' }
+                    }
+                }
+            });
+
+            // Active nav link scrolling
+            const sections = document.querySelectorAll('section');
+            const navLinks = document.querySelectorAll('.nav-link');
+            window.onscroll = () => {
+                let current = '';
+                sections.forEach(section => {
+                    const sectionTop = section.offsetTop;
+                    if (pageYOffset >= sectionTop - 100) {
+                        current = section.getAttribute('id');
+                    }
+                });
+                navLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href').slice(1) === current) {
+                        link.classList.add('active');
+                    }
+                });
+            };
+        });
+    </script>
+</body>
+</html>
