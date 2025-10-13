@@ -10,8 +10,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- Chosen Palette: Tech Clarity -->
-    <!-- Application Structure Plan: The application is designed as a single-page interactive guide with a fixed top navigation for easy access to different thematic sections. This structure was chosen over a linear document to allow the user, likely a busy IT professional, to quickly jump to the information most relevant to them. The flow is: 1) A 'Dashboard' to provide a direct answer to the main question and an overview. 2) An 'Integration Strategy' section with a visual diagram for the 'how'. 3) An interactive 'Deployment Blueprints' section for environment-specific guidance. 4) A 'Synergy' section to explain the 'why' and the value-add of XDR over simple logging. 5) A final 'Best Practices' checklist for actionable takeaways. This non-linear, thematic structure makes complex information digestible and task-oriented. -->
-    <!-- Visualization & Content Choices: 1) Main Question: "Can Wazuh just forward logs to Splunk?" -> Goal: Inform -> Method: Prominent text block and an HTML/CSS architectural diagram. -> Interaction: Hover effects on diagram components to explain their roles. -> Justification: Directly answers the user's core question and provides immediate architectural context. 2) Environment-specific deployment -> Goal: Organize/Guide -> Method: Interactive tabs for different asset types (K8s, Linux, etc.). -> Interaction: Clicking a tab reveals tailored advice and code snippets. -> Justification: Breaks down a complex deployment matrix into a user-driven, easy-to-navigate interface. 3) Value of XDR vs. Logs -> Goal: Compare -> Method: Interactive cards for Wazuh features and a Chart.js bar chart comparing data richness. -> Interaction: Clicking cards reveals details; the chart provides a quick visual summary. -> Justification: Clearly articulates the benefits of the integrated solution beyond basic logging. 4) Best Practices -> Goal: Summarize -> Method: A two-column checklist. -> Interaction: Simple hover effects. -> Justification: Provides a scannable, actionable summary. -->
+    <!-- Application Structure Plan: The application is designed as a single-page interactive guide with a fixed top navigation for easy access to different thematic sections. This structure was chosen over a linear document to allow the user, likely a busy IT professional, to quickly jump to the information most relevant to them. The flow is: 1) A 'Dashboard' to provide a direct answer to the main question and an overview. 2) An 'Introduction' to explain the 'what' and 'why' of Wazuh. 3) An 'Integration Strategy' section with a visual diagram for the 'how'. 4) An interactive 'Deployment Blueprints' section for environment-specific guidance. 5) A 'Synergy' section to explain the value-add of XDR over simple logging. 6) A final 'Best Practices' checklist for actionable takeaways. 7) An 'AI Generator' to provide a practical tool. This non-linear, thematic structure makes complex information digestible and task-oriented. -->
+    <!-- Visualization & Content Choices: 1) Main Question: "Can Wazuh just forward logs to Splunk?" -> Goal: Inform -> Method: Prominent text block and an HTML/CSS architectural diagram. -> Interaction: Hover effects on diagram components to explain their roles. -> Justification: Directly answers the user's core question and provides immediate architectural context. 2) Introduction -> Goal: Explain -> Method: Icon-based feature cards. -> Justification: Breaks down core XDR concepts into easily understandable benefits. 3) Environment-specific deployment -> Goal: Organize/Guide -> Method: Interactive tabs for different asset types (K8s, Linux, etc.). -> Interaction: Clicking a tab reveals tailored advice and code snippets. -> Justification: Breaks down a complex deployment matrix into a user-driven, easy-to-navigate interface. 4) Value of XDR vs. Logs -> Goal: Compare -> Method: Interactive cards for Wazuh features and a Chart.js bar chart comparing data richness. -> Interaction: Clicking cards reveals details; the chart provides a quick visual summary. -> Justification: Clearly articulates the benefits of the integrated solution beyond basic logging. 5) Best Practices -> Goal: Summarize -> Method: A two-column checklist. -> Interaction: Simple hover effects. -> Justification: Provides a scannable, actionable summary. 6) AI Rule Generation -> Goal: Utility -> Method: A form that calls the Gemini API. -> Interaction: User inputs a log, clicks a button, gets a result. -> Justification: Provides a valuable, time-saving tool directly within the guide. -->
     <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
     <style>
         body {
@@ -73,6 +73,7 @@
                 <div class="hidden md:block">
                     <div class="ml-10 flex items-baseline space-x-4">
                         <a href="#dashboard" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-700 hover:text-indigo-600 border-b-2 border-transparent">Dashboard</a>
+                        <a href="#introduction" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-700 hover:text-indigo-600 border-b-2 border-transparent">Introduction</a>
                         <a href="#integration" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-700 hover:text-indigo-600 border-b-2 border-transparent">Integration</a>
                         <a href="#blueprints" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-700 hover:text-indigo-600 border-b-2 border-transparent">Blueprints</a>
                         <a href="#synergy" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-700 hover:text-indigo-600 border-b-2 border-transparent">Synergy</a>
@@ -97,6 +98,42 @@
                 </p>
                 <div class="mt-6 p-4 bg-indigo-50 border border-indigo-200 rounded-lg">
                     <p class="text-indigo-800"><span class="font-semibold">The Core Idea:</span> Use each platform for its primary strength. Wazuh excels at deep endpoint security monitoring (FIM, vulnerability scanning, etc.), and Splunk excels at large-scale data aggregation, search, and analytics. Together, they create a robust, multi-layered security solution.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="introduction" class="mt-20 scroll-mt-20">
+            <h2 class="text-3xl font-bold text-slate-900 text-center">What is Wazuh XDR & How Does It Improve Security?</h2>
+            <p class="mt-4 max-w-3xl mx-auto text-center text-lg text-slate-600">Wazuh is a free and open-source security platform that unifies Extended Detection and Response (XDR) and Security Information and Event Management (SIEM) capabilities. It functions as a powerful security agent that provides deep visibility and protection across your entire infrastructure—from on-premise servers and corporate endpoints to cloud workloads and containers.</p>
+            
+            <div class="mt-12 grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="card p-6">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 h-12 w-12 rounded-md bg-indigo-500 text-white flex items-center justify-center text-2xl">👁️</div>
+                        <h3 class="ml-4 text-xl font-bold text-slate-800">Unified Visibility</h3>
+                    </div>
+                    <p class="mt-4 text-slate-600">Wazuh collects, aggregates, indexes, and analyzes security data from across your organization. This gives you a centralized view of your security posture, making it easier to detect threats that move laterally across different systems.</p>
+                </div>
+                <div class="card p-6">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 h-12 w-12 rounded-md bg-indigo-500 text-white flex items-center justify-center text-2xl">🛡️</div>
+                        <h3 class="ml-4 text-xl font-bold text-slate-800">Proactive Threat Detection</h3>
+                    </div>
+                    <p class="mt-4 text-slate-600">Instead of just reacting to logs, Wazuh actively hunts for threats. It uses File Integrity Monitoring (FIM) to detect unauthorized changes, scans for known vulnerabilities (CVEs), and assesses system configurations against security benchmarks (CIS) to find weaknesses before they are exploited.</p>
+                </div>
+                 <div class="card p-6">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 h-12 w-12 rounded-md bg-indigo-500 text-white flex items-center justify-center text-2xl">⚡</div>
+                        <h3 class="ml-4 text-xl font-bold text-slate-800">Rapid Incident Response</h3>
+                    </div>
+                    <p class="mt-4 text-slate-600">When a threat is detected, Wazuh's active response capabilities can automatically execute countermeasures, such as blocking a malicious IP address, disabling a compromised user account, or quarantining an infected endpoint. This drastically reduces threat containment time.</p>
+                </div>
+                <div class="card p-6">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 h-12 w-12 rounded-md bg-indigo-500 text-white flex items-center justify-center text-2xl">📜</div>
+                        <h3 class="ml-4 text-xl font-bold text-slate-800">Compliance & Auditing</h3>
+                    </div>
+                    <p class="mt-4 text-slate-600">Wazuh helps organizations meet regulatory requirements like PCI DSS, GDPR, and HIPAA. It provides out-of-the-box rules and reports mapped to these standards, simplifying the process of generating audit evidence and proving compliance.</p>
                 </div>
             </div>
         </section>
@@ -226,8 +263,8 @@
         </section>
 
         <section id="synergy" class="mt-20 scroll-mt-20">
-            <h2 class="text-3xl font-bold text-slate-900 text-center">The Synergy: XDR Data vs. Raw Logs</h2>
-             <p class="mt-4 max-w-3xl mx-auto text-center text-lg text-slate-600">Does it make sense to have XDR in your prod environment alongside Splunk? Yes—because Wazuh provides rich security context that raw logs lack.</p>
+            <h2 class="text-3xl font-bold text-slate-900 text-center">The Synergy: XDR Data vs. Raw Logs in Production</h2>
+             <p class="mt-4 max-w-3xl mx-auto text-center text-lg text-slate-600">Does it make sense to have XDR in your prod environment alongside Splunk? Yes—because Wazuh provides rich security context and capabilities that raw logs alone cannot offer, transforming your reactive monitoring into a proactive security posture.</p>
             
             <div class="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <div class="card p-5 synergy-card">
@@ -252,7 +289,19 @@
                 </div>
                  <div class="card p-5 synergy-card">
                     <h4 class="font-bold text-slate-800">Active Response</h4>
-                    <p class="text-sm text-slate-600 mt-2">While Splunk is for analysis, Wazuh can take action. An analyst in Splunk could trigger a Wazuh active response (e.g., block an IP via firewall) through a scripted alert action, closing the loop between detection and response.</p>
+                    <p class="text-sm text-slate-600 mt-2">While Splunk is for analysis, Wazuh can take immediate, automated action on the endpoint. An analyst in Splunk can trigger a Wazuh active response (e.g., block an IP, quarantine a host) to contain threats in real-time, drastically reducing incident response time.</p>
+                </div>
+                 <div class="card p-5 synergy-card bg-indigo-50 border-indigo-200">
+                    <h4 class="font-bold text-indigo-800">Incident Response Acceleration</h4>
+                    <p class="text-sm text-slate-600 mt-2">Wazuh provides a complete forensic trail—process lineage, file hashes, user activity—all correlated within a single alert. This eliminates hours of manual log correlation in Splunk, allowing your team to understand the full attack chain and remediate faster.</p>
+                </div>
+                 <div class="card p-5 synergy-card bg-indigo-50 border-indigo-200">
+                    <h4 class="font-bold text-indigo-800">Proactive Threat Hunting</h4>
+                    <p class="text-sm text-slate-600 mt-2">The rich endpoint data from Wazuh enables your security team to proactively hunt for threats in Splunk. You can search for subtle indicators of compromise (IOCs) or anomalous behaviors that haven't triggered an alert yet, stopping attacks before they escalate.</p>
+                </div>
+                 <div class="card p-5 synergy-card bg-indigo-50 border-indigo-200">
+                    <h4 class="font-bold text-indigo-800">Compliance & Auditing</h4>
+                    <p class="text-sm text-slate-600 mt-2">For audits like PCI-DSS or HIPAA, Wazuh provides concrete evidence that security controls are active. FIM reports prove critical files aren't tampered with, and SCA scans validate system hardening, satisfying auditors with data, not just policies.</p>
                 </div>
             </div>
 
@@ -313,7 +362,7 @@
                 </div>
             </div>
         </section>
-
+        
         <section id="ai-generator" class="mt-20 scroll-mt-20">
             <h2 class="text-3xl font-bold text-slate-900 text-center">✨ AI-Powered Rule Generator</h2>
             <p class="mt-4 max-w-3xl mx-auto text-center text-lg text-slate-600">Struggling with custom decoders? Paste a sample log from any source, and let Gemini generate a Wazuh decoder and rule for you.</p>
@@ -516,16 +565,16 @@
             new Chart(synergyChartCtx, {
                 type: 'bar',
                 data: {
-                    labels: ['Investigation Context', 'Proactive Detection', 'Incident Response Fidelity', 'Compliance Evidence'],
+                    labels: ['Investigation Context', 'Proactive Detection', 'Response Fidelity', 'Forensic & Audit Trail'],
                     datasets: [{
                         label: 'Standard Logs Only',
-                        data: [40, 30, 50, 60],
+                        data: [40, 30, 50, 35],
                         backgroundColor: '#cbd5e1', // slate-300
                         borderColor: '#94a3b8', // slate-400
                         borderWidth: 1
                     }, {
                         label: 'Logs + Wazuh XDR Data',
-                        data: [90, 85, 95, 80],
+                        data: [90, 85, 95, 90],
                         backgroundColor: '#6366f1', // indigo-500
                         borderColor: '#4f46e5', // indigo-600
                         borderWidth: 1
