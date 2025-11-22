@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Threat Modeling Architect: Zero-to-Master</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Removed external lucide script to prevent conflicts and ensure React compatibility -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Fira+Code:wght@400;600&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #e2e8f0; }
+        .font-mono { font-family: 'Fira Code', monospace; }
+        .glass-panel { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(148, 163, 184, 0.1); }
+        .gradient-text { background: linear-gradient(to right, #38bdf8, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+        .timeline-line {
+            position: absolute;
+            left: 24px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #334155;
+            z-index: 0;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // --- Icons (Inline to ensure React Compatibility and avoid Name Collisions) ---
+        const Icons = {
+            Shield: (props) => (
+                <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            ),
+            BookOpen: (props) => (
+                <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+            ),
+            PenTool: (props) => (
+                <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 19 7-7 3 3-7 7-3-3z"/><path d="m18 13-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="m2 2 7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>
+            ),
+            Users: (props) => (
+                <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            ),
+            MapIcon: (props) => (
+                <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+            ),
+            ChevronRight: (props) => (
+                <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+            ),
+            CheckCircle: (props) => (
+                <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            ),
+            AlertTriangle: (props) => (
+                <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            ),
+            Terminal: (props) => (
+                <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+            ),
+            Layout: (props) => (
+                <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+            ),
+            Search: (props) => (
+                <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            ),
+            Menu: (props) => (
+                <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            ),
+            X: (props) => (
+                <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            ),
+            ExternalLink: (props) => (
+                <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            )
+        };
+
+        const { 
+            Shield, BookOpen, PenTool, Users, MapIcon, // Use MapIcon to avoid collision with native Map
+            ChevronRight, CheckCircle, AlertTriangle, 
+            Terminal, Layout, Search, Menu, X, ExternalLink
+        } = Icons;
+
+        // --- Data & Content ---
+
+        const SECTIONS = {
+            INTRO: 'intro',
+            MODELS: 'models',
+            TOOLS: 'tools',
+            SKILLS: 'skills',
+            ROADMAP: 'roadmap'
+        };
+
+        const methodologies = [
+            {
+                id: 'stride',
+                title: 'STRIDE',
+                subtitle: "The Developer's Mnemonic",
+                focus: "Component-Level / Technical Bugs",
+                details: "Spoofing, Tampering, Repudiation, Info Disclosure, DoS, EoP.",
+                useCase: "Tactical analysis of specific API endpoints or code blocks. Great for finding bugs, poor for business risk.",
+                icon: <Terminal className="w-5 h-5 text-green-400"/>
+            },
+            {
+                id: 'pasta',
+                title: 'PASTA',
+                subtitle: "The Risk-Centric Strategist",
+                focus: "Strategic / Business Impact",
+                details: "7-Step Process: Objectives -> Scope -> Decomposition -> Threat -> Vulnerability -> Attack -> Risk.",
+                useCase: "High-stakes systems (Banking, Healthcare). Aligns security findings with business loss scenarios.",
+                icon: <Shield className="w-5 h-5 text-blue-400"/>
+            },
+            {
+                id: 'atasm',
+                title: 'ATASM',
+                subtitle: "The Architect's Native Tongue",
+                focus: "Design / Attack Surfaces",
+                details: "Architecture, Threats, Attack Surfaces, Mitigations.",
+                useCase: "Design phase reviews. Decomposing complex systems into surfaces and boundaries.",
+                icon: <Layout className="w-5 h-5 text-purple-400"/>
+            }
+        ];
+
+        const badSmells = [
+            {
+                title: 'The "God Class" Monolith',
+                desc: 'A component that knows too much or does too much. A single point of total failure.',
+                fix: 'The Strangler Fig Pattern',
+                fixDesc: 'Isolate specific domains (e.g., Auth) into new microservices. Route traffic gradually until the monolith atrophies.',
+                color: 'red'
+            },
+            {
+                title: 'Implicit Trust',
+                desc: 'Components trusting each other based on network location (e.g., "It\'s in the DMZ so it\'s safe").',
+                fix: 'The Ambassador (Sidecar)',
+                fixDesc: 'Deploy a proxy (Envoy/NGINX) alongside the legacy app to handle mTLS/Auth without changing legacy code.',
+                color: 'orange'
+            },
+            {
+                title: 'Promiscuous Package',
+                desc: 'APIs returning full database objects (incl. PII/Secrets) to the UI, relying on frontend hiding.',
+                fix: 'Backend for Frontend (BFF)',
+                fixDesc: 'Create an orchestration layer that filters data to strictly what the specific UI view requires.',
+                color: 'yellow'
+            }
+        ];
+
+        const roadmapData = [
+            {
+                month: "Month 1: Foundation",
+                role: "The Manual Architect",
+                theme: "Slow is smooth, smooth is fast.",
+                weeks: [
+                    "Week 1: Study Shostack & Schoenfield. Create Cheat Sheet.",
+                    "Week 2: Install Threat Dragon. Model a generic E-Commerce Store.",
+                    "Week 3: Host first '4 Questions' workshop. Let *them* draw.",
+                    "Week 4: Identify 3 'Bad Smells' in a legacy app. Write Refactoring Proposal."
+                ],
+                challenge: {
+                    title: "Legacy Monolith Model",
+                    tasks: [
+                        "Create DFD with 3 Trust Boundaries (Internet, App, Data)",
+                        "List 10 STRIDE threats with mitigations",
+                        "Propose 1 Architectural Refactoring (Strangler/Ambassador)"
+                    ]
+                }
+            },
+            {
+                month: "Month 2: Automation",
+                role: "The Builder Architect",
+                theme: "Codify the Wisdom.",
+                weeks: [
+                    "Week 1: Convert Month 1 diagram to Python code using `pytm`.",
+                    "Week 2: Write `threagile.yaml` for a microservice. Trigger risk rules.",
+                    "Week 3: Create GitHub Action to run Threagile on push.",
+                    "Week 4: Establish PR workflow for architecture changes."
+                ],
+                challenge: {
+                    title: "Threat Modeling as Code Repo",
+                    tasks: [
+                        "GitHub Repo with `threagile.yaml` or `pytm` script",
+                        "CI Pipeline generating PDF report artifacts",
+                        "Proof of 'Build Fail' on unencrypted data store"
+                    ]
+                }
+            },
+            {
+                month: "Month 3: Scaling",
+                role: "The Program Leader",
+                theme: "Scale yourself out.",
+                weeks: [
+                    "Week 1: Draft 'Security Champions' training deck.",
+                    "Week 2: Create 'Self-Service' Template Repo for new projects.",
+                    "Week 3: Host 'Elevation of Privilege' card game session.",
+                    "Week 4: Define Metrics (Time to Mitigate, % Coverage)."
+                ],
+                challenge: {
+                    title: "Program Strategy Doc",
+                    tasks: [
+                        "Intake Process Definition (When to PASTA vs STRIDE)",
+                        "Champions Curriculum",
+                        "Self-Service Tooling Strategy"
+                    ]
+                }
+            }
+        ];
+
+        // --- Components ---
+
+        const NavButton = ({ active, id, icon, label, onClick }) => (
+            <button 
+                onClick={() => onClick(id)}
+                className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+                    active === id 
+                    ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30' 
+                    : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+                }`}
+            >
+                {icon}
+                <span className="font-medium">{label}</span>
+            </button>
+        );
+
+        const SectionHeader = ({ title, subtitle }) => (
+            <div className="mb-8 border-b border-slate-700 pb-4">
+                <h2 className="text-3xl font-bold text-slate-100">{title}</h2>
+                <p className="text-slate-400 mt-2 text-lg">{subtitle}</p>
+            </div>
+        );
+
+        const CodeBlock = ({ language, code, title }) => (
+            <div className="rounded-lg overflow-hidden border border-slate-700 bg-slate-900 my-4">
+                <div className="bg-slate-800 px-4 py-2 flex items-center justify-between border-b border-slate-700">
+                    <span className="text-xs font-mono text-slate-400">{title}</span>
+                    <span className="text-xs font-bold text-blue-400 uppercase">{language}</span>
+                </div>
+                <pre className="p-4 overflow-x-auto text-sm font-mono text-slate-300">
+                    <code>{code}</code>
+                </pre>
+            </div>
+        );
+
+        const IntroView = ({ onStart }) => (
+            <div className="max-w-4xl mx-auto pt-10">
+                <div className="text-center mb-16">
+                    <div className="inline-block p-2 px-4 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 mb-6 font-mono text-sm">
+                        PRINCIPAL PRODUCT SECURITY ARCHITECT
+                    </div>
+                    <h1 className="text-5xl md:text-6xl font-bold mb-6 leading-tight">
+                        The Architect's <span className="gradient-text">Blueprint</span>
+                    </h1>
+                    <p className="text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed">
+                        A "Zero-to-Master" roadmap moving beyond "finding vulnerabilities" to "preventing flaws by design." 
+                        Master the mental models, build the automated tools, and lead the culture.
+                    </p>
+                    <button 
+                        onClick={onStart}
+                        className="mt-10 bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 px-8 rounded-xl transition-all shadow-lg shadow-blue-500/20 flex items-center mx-auto gap-2"
+                    >
+                        Start the Roadmap <ChevronRight className="w-5 h-5" />
+                    </button>
+                </div>
+
+                <div className="grid md:grid-cols-3 gap-6">
+                    <div className="glass-panel p-6 rounded-xl">
+                        <div className="bg-purple-500/20 w-12 h-12 rounded-lg flex items-center justify-center mb-4 text-purple-400">
+                            <BookOpen />
+                        </div>
+                        <h3 className="text-lg font-bold mb-2">Mental Models</h3>
+                        <p className="text-slate-400 text-sm">Master STRIDE, PASTA, and ATASM. Learn to spot architectural "Bad Smells" and refactor them.</p>
+                    </div>
+                    <div className="glass-panel p-6 rounded-xl">
+                        <div className="bg-green-500/20 w-12 h-12 rounded-lg flex items-center justify-center mb-4 text-green-400">
+                            <PenTool />
+                        </div>
+                        <h3 className="text-lg font-bold mb-2">Tool Belt</h3>
+                        <p className="text-slate-400 text-sm">Build a FOSS toolchain. Threat Dragon for diagrams, pytm and Threagile for CI/CD pipelines.</p>
+                    </div>
+                    <div className="glass-panel p-6 rounded-xl">
+                        <div className="bg-orange-500/20 w-12 h-12 rounded-lg flex items-center justify-center mb-4 text-orange-400">
+                            <Users />
+                        </div>
+                        <h3 className="text-lg font-bold mb-2">Facilitation</h3>
+                        <p className="text-slate-400 text-sm">Learn the "4 Questions" workshop script, handle stubborn devs, and gamify security.</p>
+                    </div>
+                </div>
+            </div>
+        );
+
+        const MentalModelsView = () => {
+            const [activeTab, setActiveTab] = useState('stride');
+            
+            return (
+                <div className="animate-fade-in">
+                    <SectionHeader title="Mental Models" subtitle="Methodologies & Patterns for the Architect" />
+                    
+                    <div className="glass-panel p-1 rounded-xl flex space-x-1 mb-8 overflow-x-auto">
+                        {methodologies.map(m => (
+                            <button
+                                key={m.id}
+                                onClick={() => setActiveTab(m.id)}
+                                className={`flex-1 py-3 px-4 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                                    activeTab === m.id 
+                                    ? 'bg-slate-700 text-white shadow-md' 
+                                    : 'text-slate-400 hover:text-slate-200'
+                                }`}
+                            >
+                                {m.title}
+                            </button>
+                        ))}
+                    </div>
+
+                    <div className="glass-panel p-8 rounded-xl mb-12 border-l-4 border-l-blue-500">
+                        {methodologies.map(m => activeTab === m.id && (
+                            <div key={m.id}>
+                                <div className="flex items-center gap-3 mb-4">
+                                    {m.icon}
+                                    <h3 className="text-2xl font-bold">{m.title}: {m.subtitle}</h3>
+                                </div>
+                                <div className="grid md:grid-cols-2 gap-8">
+                                    <div>
+                                        <h4 className="text-slate-300 font-semibold mb-2">Core Mechanism</h4>
+                                        <p className="text-slate-400 mb-4">{m.details}</p>
+                                        <h4 className="text-slate-300 font-semibold mb-2">Architectural Use Case</h4>
+                                        <p className="text-slate-400">{m.useCase}</p>
+                                    </div>
+                                    <div className="bg-slate-900/50 p-4 rounded-lg border border-slate-700/50">
+                                        <h4 className="text-xs font-bold text-slate-500 uppercase mb-2">Architect's Note</h4>
+                                        <p className="text-sm text-slate-300 italic">
+                                            "{m.id === 'stride' ? "Don't drown in findings. Use for specific components." : 
+                                              m.id === 'pasta' ? "Use this when talking to the CFO. It translates bugs to money." : 
+                                              "Use this when drawing on the whiteboard before code exists."}"
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    <h3 className="text-2xl font-bold mb-6 flex items-center gap-2">
+                        <AlertTriangle className="text-yellow-500"/> Security Refactoring: "Bad Smells"
+                    </h3>
+                    <div className="grid lg:grid-cols-3 gap-6">
+                        {badSmells.map((smell, idx) => (
+                            <div key={idx} className="glass-panel p-6 rounded-xl flex flex-col h-full hover:border-slate-600 transition-colors">
+                                <h4 className="text-lg font-bold text-red-400 mb-2">{smell.title}</h4>
+                                <p className="text-slate-400 text-sm mb-4 flex-grow">{smell.desc}</p>
+                                <div className="mt-4 pt-4 border-t border-slate-700/50">
+                                    <span className="text-xs font-bold text-slate-500 uppercase">The Fix</span>
+                                    <h5 className="font-bold text-green-400">{smell.fix}</h5>
+                                    <p className="text-xs text-slate-400 mt-1">{smell.fixDesc}</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        };
+
+        const ToolsView = () => {
+            return (
+                <div className="animate-fade-in">
+                    <SectionHeader title="The Master's Tool Belt" subtitle="Open Source Architecture Tools" />
+                    
+                    <div className="grid lg:grid-cols-2 gap-8 mb-12">
+                        {/* Threat Dragon */}
+                        <div className="glass-panel p-6 rounded-xl border-t-4 border-t-green-500">
+                            <div className="flex justify-between items-start mb-4">
+                                <h3 className="text-xl font-bold">OWASP Threat Dragon</h3>
+                                <span className="text-xs bg-slate-700 px-2 py-1 rounded text-slate-300">Legacy / Manual</span>
+                            </div>
+                            <p className="text-slate-400 text-sm mb-4">The digital whiteboard. Best for "Foundation" phase, legacy monoliths, and workshops.</p>
+                            <ul className="text-sm text-slate-400 space-y-2 mb-4">
+                                <li className="flex gap-2"><CheckCircle className="w-4 h-4 text-green-500"/> Uses standard shapes (Process, Store, Actor).</li>
+                                <li className="flex gap-2"><CheckCircle className="w-4 h-4 text-green-500"/> Trust Boundaries trigger automatic STRIDE suggestions.</li>
+                                <li className="flex gap-2"><CheckCircle className="w-4 h-4 text-green-500"/> Saves as JSON (Version Control friendly).</li>
+                            </ul>
+                        </div>
+
+                        {/* Threagile */}
+                        <div className="glass-panel p-6 rounded-xl border-t-4 border-t-blue-500">
+                            <div className="flex justify-between items-start mb-4">
+                                <h3 className="text-xl font-bold">Threagile / pytm</h3>
+                                <span className="text-xs bg-slate-700 px-2 py-1 rounded text-slate-300">Cloud-Native / CI/CD</span>
+                            </div>
+                            <p className="text-slate-400 text-sm mb-4">Threat Modeling as Code (TMasC). Best for microservices and enforcing governance via pipelines.</p>
+                            <ul className="text-sm text-slate-400 space-y-2 mb-4">
+                                <li className="flex gap-2"><CheckCircle className="w-4 h-4 text-blue-500"/> Define architecture in Python or YAML.</li>
+                                <li className="flex gap-2"><CheckCircle className="w-4 h-4 text-blue-500"/> Auto-generate DFDs and PDF Reports.</li>
+                                <li className="flex gap-2"><CheckCircle className="w-4 h-4 text-blue-500"/> Fail build if risk rules are violated.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <h3 className="text-xl font-bold mb-4">Implementation Examples</h3>
+                    
+                    <div className="space-y-6">
+                        <div>
+                            <h4 className="text-md font-semibold text-slate-300 mb-2">Option A: pytm (Pythonic)</h4>
+                            <p className="text-sm text-slate-400 mb-2">Define your system in Python. The script generates diagrams and findings.</p>
+                            <CodeBlock 
+                                language="python" 
+                                title="model.py"
+                                code={`from pytm import TM, Server, Datastore, Dataflow, Boundary, Actor
+
+tm = TM("E-Commerce Gateway")
+
+internet = Boundary("Internet")
+vpc_dmz = Boundary("VPC DMZ")
+
+user = Actor("Customer")
+user.in_boundary = internet
+
+web_app = Server("Web App")
+web_app.in_boundary = vpc_dmz
+
+# Logic: Dataflow crossing boundary without encryption raises threat
+Dataflow(user, web_app, "User Login via HTTPS")
+
+tm.process() # Generates DFD and Report`}
+                            />
+                        </div>
+
+                        <div>
+                            <h4 className="text-md font-semibold text-slate-300 mb-2">Option B: Threagile (Declarative YAML)</h4>
+                            <p className="text-sm text-slate-400 mb-2">Best for governance. Define policies (Risk Rules) that code must adhere to.</p>
+                            <CodeBlock 
+                                language="yaml" 
+                                title="threagile.yaml"
+                                code={`technical_assets:
+  web_server:
+    type: web-server
+    usage: business-critical
+    location: cloud
+    confidentiality: high
+  database:
+    type: datastore
+    encryption: none  # <--- Threagile Risk Rule will catch this!
+
+data_flows:
+  - source: web_server
+    target: database
+    protocol: sql`}
+                            />
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const SkillsView = () => {
+            return (
+                <div className="animate-fade-in">
+                    <SectionHeader title="Facilitation & Soft Skills" subtitle="Leading the Workshop" />
+
+                    <div className="mb-10">
+                        <h3 className="text-xl font-bold mb-6">The "4 Questions" Workshop Script</h3>
+                        <div className="grid md:grid-cols-4 gap-4">
+                            {[
+                                { t: "1. What are we building?", d: "Don't draw it yourself. Hand the marker to the Dev Lead. Ask: 'Is this how docs say it works, or how it actually works?'", m: "15m" },
+                                { t: "2. What can go wrong?", d: "'Evil Brainstorming'. Prompt: 'You have 24 hours and I'll pay you $10k to crash this. How do you do it?'", m: "20m" },
+                                { t: "3. What to do about it?", d: "Decide: Fix now, fix later, or accept risk. Look for Refactoring opportunities here.", m: "15m" },
+                                { t: "4. Did we do a good job?", d: "Retrospective. Who was missing? Did we find design flaws or just bugs?", m: "5m" }
+                            ].map((step, i) => (
+                                <div key={i} className="glass-panel p-5 rounded-lg relative overflow-hidden">
+                                    <div className="absolute top-0 right-0 bg-slate-800 px-2 py-1 text-xs font-mono text-slate-400">{step.m}</div>
+                                    <h4 className="font-bold text-blue-400 mb-2">{step.t}</h4>
+                                    <p className="text-sm text-slate-400">{step.d}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="grid md:grid-cols-2 gap-8">
+                        <div>
+                            <h3 className="text-xl font-bold mb-4">Handling Objections</h3>
+                            <div className="space-y-4">
+                                <div className="glass-panel p-4 rounded-lg border-l-4 border-l-red-400">
+                                    <p className="font-bold text-slate-200 text-sm">"We don't have time."</p>
+                                    <p className="text-slate-400 text-sm mt-1">"If we find a design flaw in pentest, rework takes 3 weeks. 60 mins now saves 3 sprints later."</p>
+                                </div>
+                                <div className="glass-panel p-4 rounded-lg border-l-4 border-l-red-400">
+                                    <p className="font-bold text-slate-200 text-sm">"That's unrealistic."</p>
+                                    <p className="text-slate-400 text-sm mt-1">"Agreed, it's low probability. Let's mark it 'Low Prob / High Impact' and let the Product Owner decide to accept the risk."</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <h3 className="text-xl font-bold mb-4">Gamification</h3>
+                            <div className="glass-panel p-5 rounded-lg">
+                                <h4 className="font-bold text-purple-400 flex items-center gap-2">
+                                    <Users className="w-4 h-4"/> Elevation of Privilege
+                                </h4>
+                                <p className="text-sm text-slate-400 mt-2 mb-3">
+                                    A card game where developers compete to find threats. 
+                                </p>
+                                <div className="bg-slate-800 p-3 rounded text-sm text-slate-300">
+                                    <strong>Gameplay:</strong> Deal cards (e.g., "3 of Tampering"). To play a card, the dev must link the threat to the diagram on the whiteboard.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const RoadmapView = () => {
+            return (
+                <div className="animate-fade-in pb-20">
+                    <SectionHeader title="The Action Plan" subtitle="3 Months to Mastery" />
+                    
+                    <div className="relative pl-8 md:pl-12 space-y-12">
+                        <div className="timeline-line"></div>
+                        
+                        {roadmapData.map((phase, i) => (
+                            <div key={i} className="relative z-10">
+                                <div className="absolute -left-11 top-0 w-8 h-8 rounded-full bg-slate-800 border-2 border-blue-500 flex items-center justify-center font-bold text-blue-500 text-sm">
+                                    {i + 1}
+                                </div>
+                                
+                                <div className="glass-panel rounded-xl overflow-hidden">
+                                    <div className="bg-slate-800/50 p-6 border-b border-slate-700/50 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                        <div>
+                                            <h3 className="text-2xl font-bold text-slate-100">{phase.month}</h3>
+                                            <p className="text-blue-400 font-medium">{phase.role}</p>
+                                        </div>
+                                        <div className="px-4 py-2 bg-blue-500/10 rounded-full border border-blue-500/20 text-xs font-mono text-blue-300">
+                                            THEME: {phase.theme}
+                                        </div>
+                                    </div>
+
+                                    <div className="p-6 grid md:grid-cols-2 gap-8">
+                                        <div>
+                                            <h4 className="font-bold text-slate-300 mb-4 flex items-center gap-2">
+                                                <MapIcon className="w-4 h-4"/> Weekly Goals
+                                            </h4>
+                                            <ul className="space-y-3">
+                                                {phase.weeks.map((week, idx) => (
+                                                    <li key={idx} className="flex items-start gap-3 text-sm text-slate-400">
+                                                        <div className="mt-1 w-1.5 h-1.5 rounded-full bg-slate-600 flex-shrink-0"></div>
+                                                        {week}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
+
+                                        <div className="bg-slate-900/50 rounded-lg p-5 border border-dashed border-slate-700">
+                                            <h4 className="font-bold text-amber-400 mb-3 text-sm uppercase tracking-wide flex items-center gap-2">
+                                                <AlertTriangle className="w-4 h-4"/> Challenge Project
+                                            </h4>
+                                            <p className="font-bold text-slate-200 mb-3">{phase.challenge.title}</p>
+                                            <div className="space-y-2">
+                                                {phase.challenge.tasks.map((task, tIdx) => (
+                                                    <div key={tIdx} className="flex items-center gap-2 text-sm text-slate-400">
+                                                        <input type="checkbox" className="rounded bg-slate-800 border-slate-600 text-blue-500 focus:ring-0"/>
+                                                        <span>{task}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        };
+
+        const App = () => {
+            const [activeSection, setActiveSection] = useState(SECTIONS.INTRO);
+            const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+
+            const renderContent = () => {
+                switch(activeSection) {
+                    case SECTIONS.INTRO: return <IntroView onStart={() => setActiveSection(SECTIONS.MODELS)} />;
+                    case SECTIONS.MODELS: return <MentalModelsView />;
+                    case SECTIONS.TOOLS: return <ToolsView />;
+                    case SECTIONS.SKILLS: return <SkillsView />;
+                    case SECTIONS.ROADMAP: return <RoadmapView />;
+                    default: return <IntroView />;
+                }
+            };
+
+            const NavItem = ({ section, icon, label }) => (
+                <NavButton 
+                    active={activeSection} 
+                    id={section} 
+                    icon={icon} 
+                    label={label} 
+                    onClick={(s) => {
+                        setActiveSection(s);
+                        setIsMobileNavOpen(false);
+                    }} 
+                />
+            );
+
+            return (
+                <div className="flex min-h-screen">
+                    {/* Desktop Sidebar */}
+                    <div className="hidden md:flex w-64 flex-col bg-slate-900 border-r border-slate-800 fixed h-full z-50">
+                        <div className="p-6">
+                            <h1 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+                                <Shield className="text-blue-500"/>
+                                TM Mastery
+                            </h1>
+                        </div>
+                        <nav className="flex-1 px-4 space-y-2">
+                            <NavItem section={SECTIONS.INTRO} icon={<Layout size={20}/>} label="Overview" />
+                            <NavItem section={SECTIONS.MODELS} icon={<BookOpen size={20}/>} label="Mental Models" />
+                            <NavItem section={SECTIONS.TOOLS} icon={<PenTool size={20}/>} label="Tool Belt" />
+                            <NavItem section={SECTIONS.SKILLS} icon={<Users size={20}/>} label="Soft Skills" />
+                            <NavItem section={SECTIONS.ROADMAP} icon={<MapIcon size={20}/>} label="Action Plan" />
+                        </nav>
+                        <div className="p-4 border-t border-slate-800">
+                            <div className="bg-slate-800 rounded p-3 text-xs text-slate-400">
+                                <p className="font-bold text-slate-300 mb-1">Status: Specialist</p>
+                                <div className="w-full bg-slate-700 h-1.5 rounded-full overflow-hidden">
+                                    <div className="bg-blue-500 h-full w-[10%]"></div>
+                                </div>
+                                <p className="mt-2">Target: Architect</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Mobile Header */}
+                    <div className="md:hidden fixed w-full bg-slate-900 border-b border-slate-800 z-50 px-4 py-3 flex justify-between items-center">
+                        <h1 className="text-lg font-bold text-white flex items-center gap-2">
+                            <Shield className="text-blue-500 w-5 h-5"/> TM Mastery
+                        </h1>
+                        <button onClick={() => setIsMobileNavOpen(!isMobileNavOpen)} className="text-slate-300">
+                            {isMobileNavOpen ? <X /> : <Menu />}
+                        </button>
+                    </div>
+
+                    {/* Mobile Nav Overlay */}
+                    {isMobileNavOpen && (
+                        <div className="md:hidden fixed inset-0 bg-slate-900 z-40 pt-16 px-4 space-y-2">
+                            <NavItem section={SECTIONS.INTRO} icon={<Layout size={20}/>} label="Overview" />
+                            <NavItem section={SECTIONS.MODELS} icon={<BookOpen size={20}/>} label="Mental Models" />
+                            <NavItem section={SECTIONS.TOOLS} icon={<PenTool size={20}/>} label="Tool Belt" />
+                            <NavItem section={SECTIONS.SKILLS} icon={<Users size={20}/>} label="Soft Skills" />
+                            <NavItem section={SECTIONS.ROADMAP} icon={<MapIcon size={20}/>} label="Action Plan" />
+                        </div>
+                    )}
+
+                    {/* Main Content */}
+                    <div className="flex-1 md:ml-64 p-6 md:p-12 max-w-7xl mx-auto w-full pt-20 md:pt-12">
+                        {renderContent()}
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
