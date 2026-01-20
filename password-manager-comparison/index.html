@@ -1,0 +1,500 @@
+import React, { useState, useEffect } from 'react';
+import { Shield, Server, Users, Cpu, Database, Lock, Terminal, CheckCircle, XCircle, AlertTriangle, Info, ArrowRight, Layout, Smartphone, Key } from 'lucide-react';
+
+const PasswordManagerComparison = () => {
+  const [activeTab, setActiveTab] = useState('overview');
+  const [selectedManager, setSelectedManager] = useState(null);
+
+  // Data derived from the comprehensive analysis
+  const managers = {
+    bitwarden: {
+      id: 'bitwarden',
+      name: 'Bitwarden (Official)',
+      color: 'bg-blue-600',
+      textColor: 'text-blue-600',
+      icon: <Shield className="w-6 h-6" />,
+      tagline: 'The Industry Standard',
+      description: 'The official, audited, enterprise-grade solution using C# and .NET. Best for compliance-heavy environments.',
+      specs: {
+        language: 'C# (.NET Core)',
+        ram: '2GB - 4GB+',
+        arch: 'Microservices (10+ containers)',
+        security: 'Zero-Knowledge (AES-256)',
+        trust: 'Full 3rd-Party Audits'
+      }
+    },
+    vaultwarden: {
+      id: 'vaultwarden',
+      name: 'Vaultwarden',
+      color: 'bg-indigo-600',
+      textColor: 'text-indigo-600',
+      icon: <Database className="w-6 h-6" />,
+      tagline: 'High Efficiency',
+      description: 'Unofficial Rust implementation. Unlocks enterprise features for free and runs on minimal hardware (Raspberry Pi compatible).',
+      specs: {
+        language: 'Rust',
+        ram: '~10MB - 128MB',
+        arch: 'Monolithic (1 container)',
+        security: 'Zero-Knowledge (AES-256)',
+        trust: 'Community Audit Only'
+      }
+    },
+    passbolt: {
+      id: 'passbolt',
+      name: 'Passbolt',
+      color: 'bg-rose-600',
+      textColor: 'text-rose-600',
+      icon: <Users className="w-6 h-6" />,
+      tagline: 'Team Collaboration',
+      description: 'Web-native, OpenPGP-based manager designed for DevOps teams and granular sharing permissions.',
+      specs: {
+        language: 'PHP (CakePHP)',
+        ram: '1GB - 2GB',
+        arch: 'MVC Web App',
+        security: 'OpenPGP (Web of Trust)',
+        trust: 'Full 3rd-Party Audits'
+      }
+    }
+  };
+
+  const FeatureCheck = ({ value, label }) => (
+    <div className="flex items-center space-x-2 mb-1">
+      {value ? <CheckCircle className="w-4 h-4 text-green-500" /> : <XCircle className="w-4 h-4 text-red-500" />}
+      <span className="text-sm text-gray-700">{label}</span>
+    </div>
+  );
+
+  const ResourceBar = ({ label, value, max, color }) => (
+    <div className="mb-4">
+      <div className="flex justify-between text-sm mb-1">
+        <span className="font-medium text-gray-700">{label}</span>
+        <span className="text-gray-500">{value}</span>
+      </div>
+      <div className="w-full bg-gray-200 rounded-full h-2.5">
+        <div className={`h-2.5 rounded-full ${color}`} style={{ width: max }}></div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen bg-gray-50 font-sans text-gray-800">
+      {/* Header */}
+      <header className="bg-slate-900 text-white py-8 px-4 shadow-lg">
+        <div className="max-w-7xl mx-auto">
+          <h1 className="text-3xl md:text-4xl font-bold flex items-center gap-3">
+            <Lock className="w-10 h-10 text-emerald-400" />
+            Self-Hosted Password Manager Analysis
+          </h1>
+          <p className="mt-2 text-slate-400 text-lg">
+            A technical comparison of Bitwarden, Vaultwarden, and Passbolt infrastructures.
+          </p>
+        </div>
+      </header>
+
+      {/* Navigation */}
+      <nav className="bg-white shadow sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto px-4 overflow-x-auto">
+          <div className="flex space-x-8">
+            {['overview', 'deep-dive', 'resources', 'decision-engine'].map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`py-4 px-2 border-b-2 font-medium capitalize transition-colors whitespace-nowrap ${
+                  activeTab === tab
+                    ? 'border-emerald-500 text-emerald-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                {tab.replace('-', ' ')}
+              </button>
+            ))}
+          </div>
+        </div>
+      </nav>
+
+      <main className="max-w-7xl mx-auto px-4 py-8">
+        
+        {/* VIEW: OVERVIEW */}
+        {activeTab === 'overview' && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {Object.values(managers).map((manager) => (
+              <div key={manager.id} className="bg-white rounded-xl shadow-md hover:shadow-xl transition-shadow border border-gray-100 overflow-hidden flex flex-col">
+                <div className={`h-2 ${manager.color}`}></div>
+                <div className="p-6 flex-1">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className={`p-3 rounded-full bg-opacity-10 ${manager.color.replace('bg-', 'bg-')}`}>
+                      <div className={manager.textColor}>{manager.icon}</div>
+                    </div>
+                    <span className="px-3 py-1 bg-gray-100 text-xs font-bold uppercase text-gray-500 rounded-full tracking-wider">
+                      {manager.specs.language}
+                    </span>
+                  </div>
+                  <h2 className="text-2xl font-bold mb-1 text-gray-800">{manager.name}</h2>
+                  <p className={`text-sm font-semibold mb-4 uppercase tracking-wide ${manager.textColor}`}>{manager.tagline}</p>
+                  <p className="text-gray-600 mb-6 leading-relaxed">
+                    {manager.description}
+                  </p>
+                  
+                  <div className="space-y-3 bg-gray-50 p-4 rounded-lg">
+                    <div className="flex items-center text-sm">
+                      <Cpu className="w-4 h-4 mr-2 text-gray-400" />
+                      <span className="font-medium mr-2">RAM:</span> {manager.specs.ram}
+                    </div>
+                    <div className="flex items-center text-sm">
+                      <Server className="w-4 h-4 mr-2 text-gray-400" />
+                      <span className="font-medium mr-2">Arch:</span> {manager.specs.arch}
+                    </div>
+                    <div className="flex items-center text-sm">
+                      <Shield className="w-4 h-4 mr-2 text-gray-400" />
+                      <span className="font-medium mr-2">Trust:</span> {manager.specs.trust}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* VIEW: DEEP DIVE */}
+        {activeTab === 'deep-dive' && (
+          <div className="space-y-8">
+            {/* Architecture Section */}
+            <div className="bg-white rounded-lg shadow p-6">
+              <h3 className="text-xl font-bold mb-4 flex items-center">
+                <Server className="w-5 h-5 mr-2 text-blue-500" />
+                Backend Architecture & Engineering
+              </h3>
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Feature</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bitwarden</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vaultwarden</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Passbolt</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    <tr>
+                      <td className="px-6 py-4 text-sm font-medium text-gray-900">Tech Stack</td>
+                      <td className="px-6 py-4 text-sm text-gray-600">C# / .NET Core</td>
+                      <td className="px-6 py-4 text-sm text-gray-600">Rust (Clean-room impl.)</td>
+                      <td className="px-6 py-4 text-sm text-gray-600">PHP (CakePHP)</td>
+                    </tr>
+                    <tr>
+                      <td className="px-6 py-4 text-sm font-medium text-gray-900">Databases</td>
+                      <td className="px-6 py-4 text-sm text-gray-600">MSSQL (Std), Postgres/MySQL (Lite)</td>
+                      <td className="px-6 py-4 text-sm text-gray-600">SQLite (Default), MySQL, Postgres</td>
+                      <td className="px-6 py-4 text-sm text-gray-600">MariaDB / MySQL</td>
+                    </tr>
+                    <tr>
+                      <td className="px-6 py-4 text-sm font-medium text-gray-900">Orchestration</td>
+                      <td className="px-6 py-4 text-sm text-gray-600">10-12 Containers (Microservices)</td>
+                      <td className="px-6 py-4 text-sm text-gray-600">Single Container / Binary</td>
+                      <td className="px-6 py-4 text-sm text-gray-600">Native LAMP/LEMP or Docker</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Security Section */}
+            <div className="bg-white rounded-lg shadow p-6">
+              <h3 className="text-xl font-bold mb-4 flex items-center">
+                <Key className="w-5 h-5 mr-2 text-rose-500" />
+                Cryptographic Models
+              </h3>
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h4 className="font-bold text-lg mb-2 text-gray-800">Bitwarden & Vaultwarden</h4>
+                  <p className="text-sm font-semibold text-blue-600 mb-2">Symmetric Master Key Model</p>
+                  <ul className="list-disc list-inside text-sm space-y-2 text-gray-600">
+                    <li>Uses <strong>PBKDF2-SHA256</strong> or <strong>Argon2id</strong> for key derivation.</li>
+                    <li>Zero-Knowledge: Server only sees hashed password and encrypted blobs.</li>
+                    <li>Sharing uses RSA-2048 Organization keys.</li>
+                    <li>Decryption happens strictly client-side.</li>
+                  </ul>
+                </div>
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h4 className="font-bold text-lg mb-2 text-gray-800">Passbolt</h4>
+                  <p className="text-sm font-semibold text-rose-600 mb-2">OpenPGP Web of Trust</p>
+                  <ul className="list-disc list-inside text-sm space-y-2 text-gray-600">
+                    <li>Based on <strong>GnuPG (GPG)</strong> keys managed by the browser ext.</li>
+                    <li><strong>GpgAuth:</strong> Challenge-response auth (no password hash sent).</li>
+                    <li>Granular Sharing: Secrets encrypted individually for each user's public key.</li>
+                    <li>Users technically "possess" a private key file.</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+             {/* UX & Clients */}
+             <div className="bg-white rounded-lg shadow p-6">
+              <h3 className="text-xl font-bold mb-4 flex items-center">
+                <Smartphone className="w-5 h-5 mr-2 text-indigo-500" />
+                Client Ecosystem & UX
+              </h3>
+              <div className="grid md:grid-cols-3 gap-4">
+                <div className="border p-4 rounded">
+                  <div className="font-bold mb-2">Bitwarden (Official)</div>
+                  <div className="space-y-2">
+                    <FeatureCheck value={true} label="Native Mobile Apps" />
+                    <FeatureCheck value={true} label="Native Desktop Apps" />
+                    <FeatureCheck value={true} label="Excellent OS Autofill" />
+                    <FeatureCheck value={true} label="CLI Tool" />
+                  </div>
+                </div>
+                <div className="border p-4 rounded relative">
+                   <div className="absolute -top-2 -right-2 bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full font-bold">Best Value</div>
+                  <div className="font-bold mb-2">Vaultwarden</div>
+                  <div className="space-y-2">
+                    <FeatureCheck value={true} label="Uses Official BW Apps" />
+                    <FeatureCheck value={true} label="All BW Extensions" />
+                    <FeatureCheck value={true} label="Identical UX to Official" />
+                    <div className="flex items-start space-x-2 text-xs text-gray-500 italic mt-2">
+                      <AlertTriangle className="w-3 h-3 flex-shrink-0 mt-0.5" />
+                      <span>Push notifications require relay server setup.</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="border p-4 rounded">
+                  <div className="font-bold mb-2">Passbolt</div>
+                  <div className="space-y-2">
+                    <FeatureCheck value={true} label="Robust Browser Ext" />
+                    <FeatureCheck value={true} label="Mobile Apps (High Friction)" />
+                    <FeatureCheck value={true} label="Windows Desktop App" />
+                    <FeatureCheck value={false} label="Native OS Autofill (Mixed)" />
+                    <div className="text-xs text-gray-500 italic mt-2">
+                      UI optimized for folder sharing and team visibility.
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* VIEW: RESOURCE VISUALIZER */}
+        {activeTab === 'resources' && (
+          <div className="bg-white rounded-lg shadow-lg p-8">
+            <h2 className="text-2xl font-bold mb-6">Resource Utilization Simulator</h2>
+            <p className="text-gray-600 mb-8">
+              Visual comparison of system requirements for a typical deployment. Note how architecture choice impacts hardware needs.
+            </p>
+
+            <div className="grid lg:grid-cols-2 gap-12">
+              <div>
+                <h3 className="font-bold text-lg mb-4 text-gray-700">RAM Consumption (Minimum)</h3>
+                
+                <ResourceBar label="Bitwarden (Standard MSSQL)" value="~2GB - 4GB" max="100%" color="bg-blue-600" />
+                <ResourceBar label="Passbolt (MariaDB)" value="~1GB" max="30%" color="bg-rose-500" />
+                <ResourceBar label="Bitwarden (Lite/Unified)" value="~1GB" max="30%" color="bg-blue-400" />
+                <ResourceBar label="Vaultwarden (Rust)" value="~100MB" max="5%" color="bg-indigo-600" />
+                
+                <div className="mt-8 p-4 bg-indigo-50 rounded-lg border border-indigo-100">
+                  <h4 className="font-bold text-indigo-900 flex items-center mb-2">
+                    <Info className="w-4 h-4 mr-2" />
+                    Why is Vaultwarden so light?
+                  </h4>
+                  <p className="text-sm text-indigo-800">
+                    Vaultwarden is written in <strong>Rust</strong>, which has no garbage collector and manages memory manually. 
+                    Bitwarden uses <strong>.NET Core</strong> (C#), which relies on JIT compilation and garbage collection, adding overhead. 
+                    Passbolt uses <strong>PHP</strong>, which is moderate but requires a web server stack (Nginx/Apache).
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="font-bold text-lg mb-4 text-gray-700">Deployment Complexity</h3>
+                <div className="space-y-6">
+                  <div>
+                    <div className="flex justify-between mb-1">
+                      <span className="font-medium">Bitwarden Standard</span>
+                      <span className="text-xs bg-red-100 text-red-800 px-2 py-0.5 rounded">Heavy</span>
+                    </div>
+                    <div className="flex space-x-1">
+                      {[...Array(10)].map((_, i) => (
+                        <div key={i} className="h-8 w-8 bg-blue-600 rounded text-xs flex items-center justify-center text-white" title="Service Container">C</div>
+                      ))}
+                      <div className="h-8 w-20 bg-gray-200 rounded text-xs flex items-center justify-center text-gray-500">...</div>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">Orchestration of 10+ containers (Identity, API, Notifications, etc.)</p>
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between mb-1">
+                      <span className="font-medium">Vaultwarden</span>
+                      <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded">Simple</span>
+                    </div>
+                    <div className="h-8 w-8 bg-indigo-600 rounded text-xs flex items-center justify-center text-white" title="Single Binary">1</div>
+                    <p className="text-xs text-gray-500 mt-1">Single Docker container containing API, Frontend, and DB logic.</p>
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between mb-1">
+                      <span className="font-medium">Passbolt</span>
+                      <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded">Standard</span>
+                    </div>
+                    <div className="flex space-x-1">
+                      <div className="h-8 w-8 bg-rose-500 rounded text-xs flex items-center justify-center text-white" title="App">App</div>
+                      <div className="h-8 w-8 bg-gray-400 rounded text-xs flex items-center justify-center text-white" title="DB">DB</div>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">Typical Web App + Database structure.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* VIEW: DECISION ENGINE */}
+        {activeTab === 'decision-engine' && (
+          <DecisionEngine managers={managers} />
+        )}
+
+      </main>
+    </div>
+  );
+};
+
+// Sub-component for the interactive decision maker
+const DecisionEngine = ({ managers }) => {
+  const [answers, setAnswers] = useState({});
+  const [result, setResult] = useState(null);
+
+  const questions = [
+    {
+      id: 'hardware',
+      text: "What hardware will you run this on?",
+      options: [
+        { id: 'low', text: "Low Power (Raspberry Pi, Small VPS, NAS)", favor: 'vaultwarden' },
+        { id: 'med', text: "Standard Server (2GB+ RAM)", favor: 'any' },
+        { id: 'legacy', text: "Existing LAMP/LEMP Stack", favor: 'passbolt' }
+      ]
+    },
+    {
+      id: 'compliance',
+      text: "What are your compliance requirements?",
+      options: [
+        { id: 'strict', text: "Strict: Must be fully audited & Official Support", favor: 'bitwarden' },
+        { id: 'opensource', text: "Open Source: Code transparency is enough", favor: 'any' },
+        { id: 'gpg', text: "Crypto: Must use GPG/OpenPGP standards", favor: 'passbolt' }
+      ]
+    },
+    {
+      id: 'features',
+      text: "Which features are critical for you?",
+      options: [
+        { id: 'sso_fido', text: "SSO & YubiKey (FIDO2) for Free", favor: 'vaultwarden' },
+        { id: 'sharing', text: "Complex granular sharing & Web of Trust", favor: 'passbolt' },
+        { id: 'standard', text: "Standard password management", favor: 'bitwarden' }
+      ]
+    }
+  ];
+
+  const handleSelect = (qId, option) => {
+    const newAnswers = { ...answers, [qId]: option };
+    setAnswers(newAnswers);
+
+    // Simple logic to determine recommendation
+    if (Object.keys(newAnswers).length === questions.length) {
+      calculateResult(newAnswers);
+    }
+  };
+
+  const calculateResult = (finalAnswers) => {
+    // Logic derived from Conclusion section of markdown
+    if (finalAnswers.compliance.id === 'strict') {
+      setResult(managers.bitwarden);
+    } else if (finalAnswers.hardware.id === 'low' || finalAnswers.features.id === 'sso_fido') {
+      setResult(managers.vaultwarden);
+    } else if (finalAnswers.features.id === 'sharing' || finalAnswers.compliance.id === 'gpg') {
+      setResult(managers.passbolt);
+    } else if (finalAnswers.hardware.id === 'legacy') {
+        setResult(managers.passbolt);
+    } else {
+      // Default fallback based on "value-to-resource ratio"
+      setResult(managers.vaultwarden);
+    }
+  };
+
+  const reset = () => {
+    setAnswers({});
+    setResult(null);
+  };
+
+  return (
+    <div className="bg-white rounded-lg shadow-lg overflow-hidden flex flex-col md:flex-row min-h-[500px]">
+      <div className="p-8 md:w-1/2 border-r border-gray-100">
+        <h2 className="text-2xl font-bold mb-6 flex items-center">
+            <Layout className="w-6 h-6 mr-2 text-purple-600" />
+            Selection Wizard
+        </h2>
+        <p className="text-gray-600 mb-8">Answer 3 questions to find your ideal self-hosted solution.</p>
+        
+        <div className="space-y-8">
+          {questions.map((q) => (
+            <div key={q.id} className="transition-opacity duration-500">
+              <h3 className="font-semibold text-gray-800 mb-3">{q.text}</h3>
+              <div className="space-y-2">
+                {q.options.map((opt) => (
+                  <button
+                    key={opt.id}
+                    onClick={() => handleSelect(q.id, opt)}
+                    className={`w-full text-left px-4 py-3 rounded border transition-all ${
+                      answers[q.id]?.id === opt.id
+                        ? 'border-purple-500 bg-purple-50 text-purple-700 ring-1 ring-purple-500'
+                        : 'border-gray-200 hover:border-purple-300 hover:bg-gray-50'
+                    }`}
+                  >
+                    {opt.text}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="md:w-1/2 bg-gray-50 p-8 flex items-center justify-center">
+        {!result ? (
+          <div className="text-center text-gray-400">
+            <div className="w-16 h-16 border-4 border-gray-200 border-t-purple-400 rounded-full animate-spin mx-auto mb-4" style={{ animationDuration: '3s' }}></div>
+            <p>Awaiting your inputs...</p>
+          </div>
+        ) : (
+          <div className="text-center animate-fade-in-up w-full max-w-sm">
+            <div className="mb-2 text-sm text-gray-500 uppercase tracking-widest font-bold">Recommended</div>
+            <div className={`inline-block p-4 rounded-full ${result.color} text-white mb-4 shadow-lg`}>
+              {result.icon}
+            </div>
+            <h2 className="text-3xl font-bold text-gray-800 mb-2">{result.name}</h2>
+            <p className="text-xl text-purple-600 mb-6">{result.tagline}</p>
+            <p className="text-gray-600 mb-8 leading-relaxed">{result.description}</p>
+            
+            <div className="bg-white p-4 rounded shadow-sm text-left text-sm space-y-2 mb-8">
+                <div className="font-bold text-gray-700 border-b pb-2 mb-2">Key specs for you:</div>
+                <div className="flex justify-between">
+                    <span>RAM:</span>
+                    <span className="font-mono">{result.specs.ram}</span>
+                </div>
+                <div className="flex justify-between">
+                    <span>Security:</span>
+                    <span className="font-mono">{result.specs.security.split(' ')[0]}</span>
+                </div>
+            </div>
+
+            <button 
+                onClick={reset}
+                className="text-gray-500 hover:text-gray-800 underline text-sm"
+            >
+                Start Over
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default PasswordManagerComparison;
