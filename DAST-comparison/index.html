@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DAST / VAPT Tooling Assessment — Security Architecture Briefing</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0F1521; --ink-2:#0A0E16; --panel:#151D2B; --panel-2:#1B2537;
+    --line:#28324500; --line:#293549; --line-soft:#20293b;
+    --text:#E9EDF4; --dim:#98A2B5; --faint:#69748A;
+    --gold:#E6B24C; --gold-soft:rgba(230,178,76,.12); --gold-line:rgba(230,178,76,.38);
+    --steel:#6BB0D6; --steel-soft:rgba(107,176,214,.12);
+    --crit:#D4574E; --high:#E0853C; --med:#E6B24C; --good:#54B08C; --great:#43B37E;
+    --shadow:0 1px 0 rgba(255,255,255,.03), 0 18px 40px -24px rgba(0,0,0,.7);
+    --display:'Space Grotesk',sans-serif; --body:'IBM Plex Sans',sans-serif; --mono:'JetBrains Mono',monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--ink); color:var(--text); font-family:var(--body);
+    line-height:1.6; -webkit-font-smoothing:antialiased;
+    background-image:
+      radial-gradient(1100px 600px at 82% -8%, rgba(230,178,76,.07), transparent 60%),
+      radial-gradient(900px 620px at 6% 4%, rgba(107,176,214,.06), transparent 55%);
+    background-attachment:fixed;
+  }
+  .wrap{max-width:1080px;margin:0 auto;padding:0 22px}
+  a{color:var(--steel);text-decoration:none}
+  a:focus-visible,button:focus-visible{outline:2px solid var(--gold);outline-offset:3px;border-radius:3px}
+
+  /* ---------- eyebrow / labels ---------- */
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--gold);font-weight:500}
+  .mono{font-family:var(--mono)}
+  .sec-num{font-family:var(--mono);color:var(--faint);font-size:12px;letter-spacing:.1em}
+
+  /* ---------- top bar ---------- */
+  .topbar{border-bottom:1px solid var(--line-soft);background:rgba(10,14,22,.6);backdrop-filter:blur(8px)}
+  .topbar .wrap{display:flex;align-items:center;justify-content:space-between;gap:16px;height:52px}
+  .brandmark{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:12.5px;letter-spacing:.12em;color:var(--dim)}
+  .dot{width:8px;height:8px;border-radius:2px;background:var(--gold);box-shadow:0 0 12px var(--gold)}
+  .classif{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;color:var(--faint);border:1px solid var(--line);padding:4px 9px;border-radius:4px}
+
+  /* ---------- hero ---------- */
+  .hero{padding:74px 0 46px;border-bottom:1px solid var(--line-soft);position:relative}
+  .hero h1{font-family:var(--display);font-weight:700;font-size:clamp(2.15rem,6.2vw,4rem);line-height:1.02;letter-spacing:-.02em;margin:20px 0 0}
+  .hero h1 .accent{color:var(--gold)}
+  .thesis{font-size:clamp(1.02rem,2.2vw,1.24rem);color:var(--dim);max-width:62ch;margin:22px 0 0;line-height:1.55}
+  .thesis b{color:var(--text);font-weight:600}
+  .meta-row{display:flex;flex-wrap:wrap;gap:10px 26px;margin-top:30px;font-family:var(--mono);font-size:11.5px;color:var(--faint);letter-spacing:.04em}
+  .meta-row span b{color:var(--dim);font-weight:500}
+
+  /* verdict chips */
+  .chips{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:38px}
+  .chip{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:15px 16px;position:relative;overflow:hidden}
+  .chip::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--steel)}
+  .chip.primary::before{background:var(--gold)}
+  .chip .k{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint)}
+  .chip .v{font-family:var(--display);font-weight:600;font-size:1.12rem;margin-top:5px;letter-spacing:-.01em}
+  .chip.primary .v{color:var(--gold)}
+  .chip .s{font-size:11.5px;color:var(--dim);margin-top:2px}
+
+  /* ---------- section frame ---------- */
+  section{padding:64px 0;border-bottom:1px solid var(--line-soft)}
+  .sec-head{display:flex;align-items:baseline;gap:16px;margin-bottom:8px}
+  .sec-head h2{font-family:var(--display);font-weight:600;font-size:clamp(1.5rem,3.6vw,2.1rem);letter-spacing:-.015em}
+  .sec-intro{color:var(--dim);max-width:70ch;margin:14px 0 34px;font-size:1.02rem}
+  .sec-intro b{color:var(--text);font-weight:600}
+
+  /* ---------- three lanes ---------- */
+  .lanes{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+  .lane{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:20px 18px 22px;display:flex;flex-direction:column}
+  .lane.match{border-color:var(--gold-line);background:linear-gradient(180deg,var(--gold-soft),transparent 42%),var(--panel)}
+  .lane .lane-tag{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint)}
+  .lane h3{font-family:var(--display);font-weight:600;font-size:1.16rem;margin:8px 0 3px}
+  .lane.match h3{color:var(--gold)}
+  .lane .lane-sub{font-size:12.5px;color:var(--dim);min-height:34px}
+  .lane .verdict{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;margin:14px 0 12px;padding:6px 9px;border-radius:5px;display:inline-block;width:fit-content}
+  .lane.match .verdict{background:var(--gold-soft);color:var(--gold);border:1px solid var(--gold-line)}
+  .lane .verdict.off{background:rgba(212,87,78,.1);color:#e28880;border:1px solid rgba(212,87,78,.3)}
+  .lane ul{list-style:none;display:flex;flex-direction:column;gap:8px;margin-top:auto}
+  .lane li{display:flex;align-items:center;gap:10px;font-size:13.5px;padding:9px 11px;background:var(--ink);border:1px solid var(--line-soft);border-radius:7px}
+  .lane li .nm{font-weight:600}
+  .lane li .mk{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;color:var(--faint);margin-left:auto;text-transform:uppercase}
+  .lane li.you{border-color:var(--steel);box-shadow:inset 0 0 0 1px rgba(107,176,214,.2)}
+  .lane li.you .mk{color:var(--steel)}
+
+  /* ---------- scoreboard ---------- */
+  .legend{display:flex;flex-wrap:wrap;gap:8px 18px;font-family:var(--mono);font-size:11px;color:var(--dim);margin-bottom:22px;align-items:center}
+  .legend .sw{display:inline-block;width:26px;height:8px;border-radius:2px;vertical-align:middle;margin-right:6px}
+  .board{display:flex;flex-direction:column;gap:9px}
+  .row{display:grid;grid-template-columns:26px 1.5fr 2.1fr auto;gap:14px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:13px 16px;transition:border-color .2s,transform .2s}
+  .row:hover{border-color:var(--gold-line);transform:translateX(2px)}
+  .row.lead{border-color:var(--gold-line);background:linear-gradient(90deg,var(--gold-soft),transparent 30%),var(--panel)}
+  .rk{font-family:var(--mono);font-size:13px;color:var(--faint);font-weight:700}
+  .row.lead .rk{color:var(--gold)}
+  .tname{display:flex;flex-direction:column;gap:3px;min-width:0}
+  .tname .n{font-family:var(--display);font-weight:600;font-size:1.02rem;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tname .meta{font-family:var(--mono);font-size:10px;letter-spacing:.04em;color:var(--faint);display:flex;gap:8px;flex-wrap:wrap}
+  .tname .meta .tier{color:var(--steel)}
+  .bar-wrap{display:flex;align-items:center;gap:11px}
+  .bar{flex:1;height:9px;background:var(--ink);border-radius:5px;overflow:hidden;border:1px solid var(--line-soft)}
+  .bar > i{display:block;height:100%;border-radius:5px;background:linear-gradient(90deg,var(--high),var(--med) 45%,var(--great));transform-origin:left;animation:grow 1s cubic-bezier(.2,.8,.2,1) both}
+  @keyframes grow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+  .score{font-family:var(--mono);font-weight:700;font-size:1.02rem;color:var(--text);min-width:42px;text-align:right}
+  .row.lead .score{color:var(--gold)}
+  .price{font-family:var(--mono);font-size:11px;color:var(--dim);white-space:nowrap;text-align:right}
+
+  /* ---------- criteria matrix ---------- */
+  .table-scroll{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+  table{border-collapse:collapse;width:100%;min-width:720px;font-size:13px}
+  thead th{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);font-weight:500;padding:14px 10px;text-align:center;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--panel-2)}
+  thead th:first-child{text-align:left;padding-left:18px}
+  tbody td{padding:11px 10px;text-align:center;border-bottom:1px solid var(--line-soft)}
+  tbody tr:last-child td{border-bottom:none}
+  tbody td:first-child{text-align:left;padding-left:18px;font-family:var(--display);font-weight:600;white-space:nowrap}
+  tbody tr:hover{background:rgba(107,176,214,.04)}
+  tbody tr.lead td:first-child{color:var(--gold)}
+  .cell{display:inline-flex;align-items:center;justify-content:center;width:32px;height:24px;border-radius:5px;font-family:var(--mono);font-size:11.5px;font-weight:500;color:#0c1017}
+  .s10,.s9{background:var(--great)} .s8{background:var(--good)} .s7{background:var(--med)}
+  .s6{background:var(--high)} .s5,.s4{background:var(--crit)}
+  .cell.dim{color:rgba(12,16,23,.92)}
+
+  /* ---------- profiles ---------- */
+  .grp-label{display:flex;align-items:center;gap:12px;margin:40px 0 18px;font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold)}
+  .grp-label::after{content:"";flex:1;height:1px;background:var(--line)}
+  .grp-label:first-of-type{margin-top:0}
+  .cards{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:19px 20px;display:flex;flex-direction:column}
+  .card.hl{border-color:var(--gold-line)}
+  .card .top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+  .card h4{font-family:var(--display);font-weight:600;font-size:1.14rem;letter-spacing:-.01em}
+  .card .tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+  .tag{font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:20px;border:1px solid var(--line);color:var(--dim);white-space:nowrap}
+  .tag.dep{border-color:rgba(107,176,214,.35);color:var(--steel)}
+  .tag.price{border-color:rgba(230,178,76,.35);color:var(--gold)}
+  .card .pos{font-size:13.5px;color:var(--dim);margin:14px 0 4px;line-height:1.55}
+  .card .lines{margin-top:12px;display:flex;flex-direction:column;gap:7px}
+  .ln{font-size:12.5px;display:flex;gap:9px;line-height:1.45}
+  .ln .lbl{font-family:var(--mono);font-size:9px;letter-spacing:.1em;padding-top:2px;flex-shrink:0;width:44px}
+  .ln.edge .lbl{color:var(--great)} .ln.watch .lbl{color:var(--high)} .ln.fit .lbl{color:var(--steel)}
+  .ln span{color:var(--dim)} .ln.edge span,.ln.fit span{color:var(--text)}
+  .badge-score{font-family:var(--mono);font-weight:700;font-size:1.3rem;color:var(--gold);line-height:1}
+  .badge-score small{display:block;font-size:9px;letter-spacing:.1em;color:var(--faint);font-weight:400;margin-top:3px}
+
+  /* ---------- verdict / decision ---------- */
+  .verdict-block{background:linear-gradient(180deg,var(--panel-2),var(--panel));border:1px solid var(--gold-line);border-radius:16px;padding:30px;position:relative;overflow:hidden}
+  .verdict-block::after{content:"PRIORITY";position:absolute;right:-26px;top:20px;transform:rotate(38deg);font-family:var(--mono);font-size:11px;letter-spacing:.3em;color:rgba(230,178,76,.16);border:2px solid rgba(230,178,76,.16);padding:5px 40px}
+  .verdict-block .vk{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold)}
+  .verdict-block h3{font-family:var(--display);font-weight:700;font-size:clamp(1.5rem,4vw,2.2rem);margin:10px 0 0;letter-spacing:-.02em}
+  .verdict-block h3 span{color:var(--gold)}
+  .verdict-block p{color:var(--dim);max-width:64ch;margin-top:14px}
+  .verdict-block p b{color:var(--text);font-weight:600}
+
+  .decide{display:flex;flex-direction:column;gap:10px;margin-top:26px}
+  .drow{display:grid;grid-template-columns:1fr auto 1.1fr;align-items:center;gap:18px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:15px 18px}
+  .drow .cond{font-size:13.5px;color:var(--dim)}
+  .drow .cond b{color:var(--text)}
+  .drow .arr{font-family:var(--mono);color:var(--faint)}
+  .drow .pick{font-family:var(--display);font-weight:600;font-size:1.02rem;text-align:right}
+  .drow .pick .why{display:block;font-family:var(--body);font-weight:400;font-size:11.5px;color:var(--faint);margin-top:2px}
+  .drow.gold{border-color:var(--gold-line)} .drow.gold .pick{color:var(--gold)}
+
+  /* ---------- program note ---------- */
+  .prog{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .pcard{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px}
+  .pcard .st{font-family:var(--mono);font-size:11px;color:var(--gold);letter-spacing:.12em}
+  .pcard h4{font-family:var(--display);font-weight:600;font-size:1.06rem;margin:8px 0 8px}
+  .pcard p{font-size:13px;color:var(--dim);line-height:1.55}
+  .pcard p b{color:var(--text);font-weight:600}
+  .stack-note{margin-top:14px;background:var(--steel-soft);border:1px solid rgba(107,176,214,.28);border-radius:12px;padding:18px 20px;font-size:13.5px;color:var(--dim)}
+  .stack-note b{color:var(--steel)}
+
+  /* ---------- footer ---------- */
+  footer{padding:44px 0 60px}
+  footer .note{font-size:12px;color:var(--faint);max-width:78ch;line-height:1.6}
+  footer .note b{color:var(--dim)}
+  .src{font-family:var(--mono);font-size:11px;color:var(--faint);margin-top:16px;display:flex;flex-wrap:wrap;gap:6px 14px}
+
+  /* ---------- responsive ---------- */
+  @media(max-width:860px){
+    .chips{grid-template-columns:1fr 1fr}
+    .lanes{grid-template-columns:1fr}
+    .cards,.prog{grid-template-columns:1fr}
+    .row{grid-template-columns:22px 1fr auto;grid-template-areas:"rk name score" "rk bar bar";row-gap:9px}
+    .rk{grid-area:rk} .tname{grid-area:name} .score{grid-area:score}
+    .bar-wrap{grid-area:bar} .price{display:none}
+    .drow{grid-template-columns:1fr;gap:6px;text-align:left}
+    .drow .arr{display:none} .drow .pick{text-align:left}
+    .verdict-block::after{display:none}
+  }
+  @media(max-width:520px){
+    .chips{grid-template-columns:1fr}
+    section{padding:48px 0}
+    .hero{padding:52px 0 38px}
+  }
+  @media(prefers-reduced-motion:reduce){
+    *{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="wrap">
+    <div class="brandmark"><span class="dot"></span> SEC-ARCH // TOOLING ASSESSMENT</div>
+    <div class="classif">INTERNAL · DECISION SUPPORT</div>
+  </div>
+</div>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow">Security Architecture Briefing · DAST / VAPT Selection</div>
+    <h1>Replacing Nessus WAS:<br>the automated <span class="accent">web-asset scanning</span> decision</h1>
+    <p class="thesis">A goal-weighted evaluation of eleven dynamic scanners against a single job — <b>point it at our web assets and surface vulnerabilities automatically</b>. Two tools on the original list (Core Impact, OpenVAS) do a different job and are handled separately. The verdict favours <b>proof-based accuracy and API/GraphQL depth</b> over raw feature counts.</p>
+    <div class="meta-row">
+      <span><b>SCOPE:</b> Automated DAST for internet-facing & internal web apps + APIs</span>
+      <span><b>INCUMBENT:</b> Nessus Expert + WAS (Tenable)</span>
+      <span><b>ENV:</b> Kubernetes · APISIX · Keycloak · GraphQL federation</span>
+    </div>
+
+    <div class="chips">
+      <div class="chip primary">
+        <div class="k">Primary pick</div>
+        <div class="v">Invicti</div>
+        <div class="s">Proof-based, portfolio-scale</div>
+      </div>
+      <div class="chip">
+        <div class="k">API / GraphQL pick</div>
+        <div class="v">Escape</div>
+        <div class="s">For your Apollo work</div>
+      </div>
+      <div class="chip">
+        <div class="k">Budget / mid-market</div>
+        <div class="v">Acunetix</div>
+        <div class="s">Same engine, lower cost</div>
+      </div>
+      <div class="chip">
+        <div class="k">Open source</div>
+        <div class="v">OWASP ZAP</div>
+        <div class="s">Not OpenVAS</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ===================== 1. THREE LANES ===================== -->
+<section id="lanes">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">01</span><h2>Your list spans three jobs</h2></div>
+    <p class="sec-intro">Before comparing, separate the categories — otherwise you compare a scanner to an exploitation framework. Only the first lane replaces Nessus WAS. The other two are <b>complements to a security programme, not substitutes</b> for automated DAST.</p>
+
+    <div class="lanes">
+      <div class="lane match">
+        <div class="lane-tag">Lane A</div>
+        <h3>Web / API DAST scanners</h3>
+        <div class="lane-sub">Crawl running apps, fuzz inputs, report vulns automatically.</div>
+        <span class="verdict">✓ REPLACES NESSUS WAS</span>
+        <ul>
+          <li><span class="nm">Invicti</span> <span class="mk">yours</span></li>
+          <li><span class="nm">Acunetix</span> <span class="mk">yours</span></li>
+          <li><span class="nm">HCL AppScan</span> <span class="mk">yours</span></li>
+          <li><span class="nm">Escape</span> <span class="mk">yours · AI</span></li>
+          <li><span class="nm">StackHawk</span> <span class="mk">yours · AI</span></li>
+          <li class="you"><span class="nm">+ Burp EE · Rapid7 · Qualys · Tenable WAS · Bright · ZAP</span> <span class="mk">added</span></li>
+        </ul>
+      </div>
+
+      <div class="lane">
+        <div class="lane-tag">Lane B</div>
+        <h3>Exploitation &amp; pentest</h3>
+        <div class="lane-sub">Simulate real attacks, chain exploits, validate impact — human-driven.</div>
+        <span class="verdict off">✕ DIFFERENT JOB</span>
+        <ul>
+          <li><span class="nm">Core Impact</span> <span class="mk">yours</span></li>
+          <li style="opacity:.6"><span class="nm">Cobalt Strike · Metasploit</span> <span class="mk">peers</span></li>
+        </ul>
+        <p style="font-size:12px;color:var(--faint);margin-top:12px;line-height:1.5">Use to <em>validate</em> exploitability and run red-team exercises — quarterly/annually, not continuously.</p>
+      </div>
+
+      <div class="lane">
+        <div class="lane-tag">Lane C</div>
+        <h3>Network / host scanning</h3>
+        <div class="lane-sub">Find CVEs & misconfigs across servers, services and open ports.</div>
+        <span class="verdict off">✕ DIFFERENT JOB</span>
+        <ul>
+          <li><span class="nm">OpenVAS / Greenbone</span> <span class="mk">yours</span></li>
+          <li style="opacity:.6"><span class="nm">Nessus · Qualys VM · InsightVM</span> <span class="mk">peers</span></li>
+        </ul>
+        <p style="font-size:12px;color:var(--faint);margin-top:12px;line-height:1.5">Great for infra CVE hygiene (185k+ CVEs). It does <em>not</em> deeply test app logic, auth flows, or APIs.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== 2. SCOREBOARD ===================== -->
+<section id="scoreboard">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">02</span><h2>Ranked for your goal</h2></div>
+    <p class="sec-intro">Composite score is weighted for <b>automated web-asset scanning</b> in a security-conscious, API-heavy, Kubernetes environment: detection accuracy 25% · coverage (web/API/GraphQL/SPA) 20% · deployment flexibility 15% · CI/CD &amp; automation 15% · scale &amp; management 10% · ease/maintenance 10% · cost efficiency 5%.</p>
+
+    <div class="legend">
+      <span>Composite fit /10</span>
+      <span><span class="sw" style="background:var(--great)"></span>strong</span>
+      <span><span class="sw" style="background:var(--med)"></span>solid</span>
+      <span><span class="sw" style="background:var(--high)"></span>situational</span>
+      <span><span class="sw" style="background:var(--crit)"></span>weak spot</span>
+    </div>
+
+    <div class="board">
+      <div class="row lead">
+        <span class="rk">01</span>
+        <div class="tname"><span class="n">Invicti</span><span class="meta"><span class="tier">ENTERPRISE</span> · HYBRID/ON-PREM · DAST+IAST</span></div>
+        <div class="bar-wrap"><div class="bar"><i style="width:88%"></i></div></div>
+        <span class="score">8.8</span>
+        <span class="price">~$7–37k+/yr</span>
+      </div>
+      <div class="row">
+        <span class="rk">02</span>
+        <div class="tname"><span class="n">HCL AppScan</span><span class="meta"><span class="tier">ENTERPRISE</span> · ON-PREM/AIR-GAP · FIPS 140-3</span></div>
+        <div class="bar-wrap"><div class="bar"><i style="width:82.5%"></i></div></div>
+        <span class="score">8.3</span>
+        <span class="price">quote-based</span>
+      </div>
+      <div class="row">
+        <span class="rk">03</span>
+        <div class="tname"><span class="n">Bright Security</span><span class="meta"><span class="tier">AI-NATIVE</span> · CLOUD+REPEATER · API-FIRST</span></div>
+        <div class="bar-wrap"><div class="bar"><i style="width:81.8%"></i></div></div>
+        <span class="score">8.2</span>
+        <span class="price">quote / free tier</span>
+      </div>
+      <div class="row">
+        <span class="rk">04</span>
+        <div class="tname"><span class="n">Escape</span><span class="meta"><span class="tier">AI-NATIVE</span> · CLOUD SaaS · API/GraphQL</span></div>
+        <div class="bar-wrap"><div class="bar"><i style="width:81.5%"></i></div></div>
+        <span class="score">8.2</span>
+        <span class="price">quote-based</span>
+      </div>
+      <div class="row">
+        <span class="rk">05</span>
+        <div class="tname"><span class="n">Acunetix</span><span class="meta"><span class="tier">MID-MARKET</span> · CLOUD/ON-PREM · DeepScan SPA</span></div>
+        <div class="bar-wrap"><div class="bar"><i style="width:80%"></i></div></div>
+        <span class="score">8.0</span>
+        <span class="price">~$4.5–15k/yr</span>
+      </div>
+      <div class="row">
+        <span class="rk">06</span>
+        <div class="tname"><span class="n">Burp Suite Enterprise</span><span class="meta"><span class="tier">ENTERPRISE</span> · SELF-HOST/CLOUD · Burp engine</span></div>
+        <div class="bar-wrap"><div class="bar"><i style="width:79.3%"></i></div></div>
+        <span class="score">7.9</span>
+        <span class="price">quote-based</span>
+      </div>
+      <div class="row">
+        <span class="rk">07</span>
+        <div class="tname"><span class="n">StackHawk</span><span class="meta"><span class="tier">AI-NATIVE</span> · CI-NATIVE · dev-owned</span></div>
+        <div class="bar-wrap"><div class="bar"><i style="width:79%"></i></div></div>
+        <span class="score">7.9</span>
+        <span class="price">~$42/contrib/mo</span>
+      </div>
+      <div class="row">
+        <span class="rk">08</span>
+        <div class="tname"><span class="n">Rapid7 InsightAppSec</span><span class="meta"><span class="tier">ENTERPRISE</span> · CLOUD+ON-PREM · Attack Replay</span></div>
+        <div class="bar-wrap"><div class="bar"><i style="width:78.5%"></i></div></div>
+        <span class="score">7.9</span>
+        <span class="price">quote-based</span>
+      </div>
+      <div class="row">
+        <span class="rk">09</span>
+        <div class="tname"><span class="n">Qualys TotalAppSec</span><span class="meta"><span class="tier">ENTERPRISE</span> · CLOUD · unifies with VM</span></div>
+        <div class="bar-wrap"><div class="bar"><i style="width:76.5%"></i></div></div>
+        <span class="score">7.7</span>
+        <span class="price">quote-based</span>
+      </div>
+      <div class="row">
+        <span class="rk">10</span>
+        <div class="tname"><span class="n">Tenable Web App Scanning</span><span class="meta"><span class="tier">IN-FAMILY</span> · CLOUD+SENSORS · ex-Nessus</span></div>
+        <div class="bar-wrap"><div class="bar"><i style="width:75.5%"></i></div></div>
+        <span class="score">7.6</span>
+        <span class="price">quote-based</span>
+      </div>
+      <div class="row">
+        <span class="rk">11</span>
+        <div class="tname"><span class="n">OWASP ZAP</span><span class="meta"><span class="tier">OPEN SOURCE</span> · SELF-HOST · Checkmarx-backed</span></div>
+        <div class="bar-wrap"><div class="bar"><i style="width:71.5%"></i></div></div>
+        <span class="score">7.2</span>
+        <span class="price">free + labour</span>
+      </div>
+    </div>
+    <p style="font-size:11.5px;color:var(--faint);margin-top:16px;font-family:var(--mono)">Scores are this assessment's analyst judgement, not a public benchmark. Re-weighting the criteria to your final answers on deployment &amp; budget will move ranks 2–10 by ±1.</p>
+  </div>
+</section>
+
+<!-- ===================== 3. CRITERIA MATRIX ===================== -->
+<section id="matrix">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">03</span><h2>Per-criterion detail</h2></div>
+    <p class="sec-intro">Where each tool wins and where it exposes a weak spot. <b>ACC</b> = detection accuracy / low false positives · <b>COV</b> = coverage (web/API/GraphQL/SPA) · <b>DEP</b> = deployment flexibility · <b>CI</b> = CI/CD &amp; automation · <b>SCL</b> = scale &amp; management · <b>EASE</b> = ease / low maintenance · <b>COST</b> = cost efficiency.</p>
+
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr><th>Tool</th><th>ACC</th><th>COV</th><th>DEP</th><th>CI</th><th>SCL</th><th>EASE</th><th>COST</th></tr>
+        </thead>
+        <tbody>
+          <tr class="lead"><td>Invicti</td><td><span class="cell s10">9.5</span></td><td><span class="cell s9">9</span></td><td><span class="cell s9">9</span></td><td><span class="cell s8">8.5</span></td><td><span class="cell s10">9.5</span></td><td><span class="cell s8">8</span></td><td><span class="cell s5">5</span></td></tr>
+          <tr><td>HCL AppScan</td><td><span class="cell s8">8.5</span></td><td><span class="cell s9">9</span></td><td><span class="cell s10">9.5</span></td><td><span class="cell s8">8</span></td><td><span class="cell s9">9</span></td><td><span class="cell s6">6</span></td><td><span class="cell s4">4</span></td></tr>
+          <tr><td>Bright Security</td><td><span class="cell s8">8.5</span></td><td><span class="cell s8">8.5</span></td><td><span class="cell s7">7</span></td><td><span class="cell s9">9</span></td><td><span class="cell s8">8</span></td><td><span class="cell s8">8</span></td><td><span class="cell s7">7</span></td></tr>
+          <tr><td>Escape</td><td><span class="cell s8">8.5</span></td><td><span class="cell s9">9</span></td><td><span class="cell s6">6</span></td><td><span class="cell s9">9</span></td><td><span class="cell s8">8</span></td><td><span class="cell s8">8.5</span></td><td><span class="cell s7">6.5</span></td></tr>
+          <tr><td>Acunetix</td><td><span class="cell s8">8.5</span></td><td><span class="cell s8">8.5</span></td><td><span class="cell s7">7.5</span></td><td><span class="cell s7">7.5</span></td><td><span class="cell s7">7.5</span></td><td><span class="cell s8">8.5</span></td><td><span class="cell s7">7</span></td></tr>
+          <tr><td>Burp Suite EE</td><td><span class="cell s8">8</span></td><td><span class="cell s8">8.5</span></td><td><span class="cell s8">8</span></td><td><span class="cell s8">8.5</span></td><td><span class="cell s8">8</span></td><td><span class="cell s6">6.5</span></td><td><span class="cell s6">6</span></td></tr>
+          <tr><td>StackHawk</td><td><span class="cell s8">8</span></td><td><span class="cell s7">7.5</span></td><td><span class="cell s6">6.5</span></td><td><span class="cell s10">9.5</span></td><td><span class="cell s7">7.5</span></td><td><span class="cell s8">8.5</span></td><td><span class="cell s8">8</span></td></tr>
+          <tr><td>Rapid7 InsightAppSec</td><td><span class="cell s8">8</span></td><td><span class="cell s8">8</span></td><td><span class="cell s8">8</span></td><td><span class="cell s8">8</span></td><td><span class="cell s8">8</span></td><td><span class="cell s7">7.5</span></td><td><span class="cell s6">6</span></td></tr>
+          <tr><td>Qualys TotalAppSec</td><td><span class="cell s7">7.5</span></td><td><span class="cell s8">8</span></td><td><span class="cell s7">7.5</span></td><td><span class="cell s7">7.5</span></td><td><span class="cell s8">8.5</span></td><td><span class="cell s7">7.5</span></td><td><span class="cell s6">6.5</span></td></tr>
+          <tr><td>Tenable WAS</td><td><span class="cell s7">7.5</span></td><td><span class="cell s7">7.5</span></td><td><span class="cell s7">7.5</span></td><td><span class="cell s7">7.5</span></td><td><span class="cell s8">8</span></td><td><span class="cell s8">8</span></td><td><span class="cell s6">6.5</span></td></tr>
+          <tr><td>OWASP ZAP</td><td><span class="cell s6">6.5</span></td><td><span class="cell s7">7</span></td><td><span class="cell s9">9</span></td><td><span class="cell s8">8</span></td><td><span class="cell s6">6</span></td><td><span class="cell s5">5</span></td><td><span class="cell s10">9.5</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== 4. PROFILES ===================== -->
+<section id="profiles">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">04</span><h2>Tool profiles</h2></div>
+    <p class="sec-intro">The shortlist in depth — what each is genuinely for, its edge, and where it bites.</p>
+
+    <div class="grp-label">Enterprise leaders</div>
+    <div class="cards">
+      <div class="card hl">
+        <div class="top"><div><h4>Invicti</h4><div class="tags"><span class="tag dep">Hybrid / On-prem</span><span class="tag price">~$7–37k+/yr</span><span class="tag">ex-Netsparker</span></div></div><div class="badge-score">8.8<small>FIT</small></div></div>
+        <p class="pos">The reference automated DAST for scanning a large portfolio without babysitting each scan. Proof-Based Scanning safely confirms exploitable findings, so your team stops triaging "probable" noise.</p>
+        <div class="lines">
+          <div class="ln edge"><span class="lbl">EDGE</span><span>Near-zero false positives · REST/SOAP/gRPC/GraphQL + SPA · asset discovery · RBAC for hundreds of apps · true on-prem option.</span></div>
+          <div class="ln watch"><span class="lbl">WATCH</span><span>Enterprise pricing, per-target; no manual intercepting-proxy (that's Burp's turf).</span></div>
+          <div class="ln fit"><span class="lbl">FIT</span><span>Your default replacement for Nessus WAS at organisational scale.</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="top"><div><h4>Acunetix</h4><div class="tags"><span class="tag dep">Cloud / On-prem</span><span class="tag price">~$4.5–15k/yr</span><span class="tag">Invicti sibling</span></div></div><div class="badge-score" style="color:var(--dim)">8.0<small>FIT</small></div></div>
+        <p class="pos">Same corporate family as Invicti, positioned for mid-market. DeepScan renders JS-heavy React/Angular/Vue apps well. The pragmatic "commercial quality without enterprise price" choice.</p>
+        <div class="lines">
+          <div class="ln edge"><span class="lbl">EDGE</span><span>Excellent SPA/JavaScript scanning · polished compliance reports · lower entry cost.</span></div>
+          <div class="ln watch"><span class="lbl">WATCH</span><span>Per-target billing, minimum ~5 targets, typically a 2-year contract; IAST needs the extra AcuSensor module.</span></div>
+          <div class="ln fit"><span class="lbl">FIT</span><span>If budget is the deciding factor and one team owns scanning.</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="top"><div><h4>HCL AppScan</h4><div class="tags"><span class="tag dep">On-prem / Air-gap</span><span class="tag price">quote-based</span><span class="tag">ex-IBM</span></div></div><div class="badge-score" style="color:var(--dim)">8.3<small>FIT</small></div></div>
+        <p class="pos">The veteran enterprise suite (evolved from IBM AppScan). AppScan 360° unifies DAST + SAST + IAST + SCA + API on a cloud-native platform you can run fully on-prem. FIPS 140-3 makes it one of few DAST tools cleared for air-gapped/federal use.</p>
+        <div class="lines">
+          <div class="ln edge"><span class="lbl">EDGE</span><span>Air-gapped &amp; sovereign deployment · unified AST platform · RapidFix agentic AI triage · deep compliance reporting.</span></div>
+          <div class="ln watch"><span class="lbl">WATCH</span><span>Heavier to run, ecosystem lock-in, opaque pricing; overkill unless you need the full suite or air-gap.</span></div>
+          <div class="ln fit"><span class="lbl">FIT</span><span>Regulated / air-gapped mandates, or you want one platform for all AST.</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="top"><div><h4>Burp Suite Enterprise</h4><div class="tags"><span class="tag dep">Self-host / Cloud</span><span class="tag price">quote-based</span><span class="tag">PortSwigger</span></div></div><div class="badge-score" style="color:var(--dim)">7.9<small>FIT</small></div></div>
+        <p class="pos">The automated, CI-driven edition built on the Burp scanning engine your pentesters already trust. Runs headless from containers in pipelines. Note: this is <em>not</em> Burp Pro (that's the ~$449/user manual toolkit).</p>
+        <div class="lines">
+          <div class="ln edge"><span class="lbl">EDGE</span><span>Same engine as manual Burp · strong web + API incl. GraphQL introspection · BChecks custom scripting · scales across many sites.</span></div>
+          <div class="ln watch"><span class="lbl">WATCH</span><span>Engine designed to assist testers, so tuning/validation effort is higher than proof-based scanners; more setup.</span></div>
+          <div class="ln fit"><span class="lbl">FIT</span><span>Teams standardised on Burp who want to automate the same engine.</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="top"><div><h4>Rapid7 InsightAppSec</h4><div class="tags"><span class="tag dep">Cloud + On-prem</span><span class="tag price">quote-based</span></div></div><div class="badge-score" style="color:var(--dim)">7.9<small>FIT</small></div></div>
+        <p class="pos">Solid black-box DAST with 95+ attack types and Attack Replay to validate a finding and re-test after a patch. Strongest if you also run the Rapid7 Insight platform (InsightVM etc.).</p>
+        <div class="lines">
+          <div class="ln edge"><span class="lbl">EDGE</span><span>Attack Replay validation · cloud + on-prem engines · clean platform integration &amp; reporting.</span></div>
+          <div class="ln watch"><span class="lbl">WATCH</span><span>Best value realised inside the Rapid7 ecosystem; less differentiated standalone.</span></div>
+          <div class="ln fit"><span class="lbl">FIT</span><span>Existing Rapid7 shops wanting one console.</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="top"><div><h4>Qualys TotalAppSec</h4><div class="tags"><span class="tag dep">Cloud</span><span class="tag price">quote-based</span></div></div><div class="badge-score" style="color:var(--dim)">7.7<small>FIT</small></div></div>
+        <p class="pos">Web + API DAST that folds into Qualys' vulnerability-management and TruRisk scoring. Adds PII/sensitive-data and web-malware detection, and can consolidate third-party pentest data (Burp/ZAP/BugCrowd).</p>
+        <div class="lines">
+          <div class="ln edge"><span class="lbl">EDGE</span><span>Unifies app + infra risk under one TruRisk score · OWASP API Top 10 · compliance mapping.</span></div>
+          <div class="ln watch"><span class="lbl">WATCH</span><span>Cloud-centric; app-scanning depth trails the pure-play DAST leaders.</span></div>
+          <div class="ln fit"><span class="lbl">FIT</span><span>Shops already invested in Qualys VMDR.</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="top"><div><h4>Tenable Web App Scanning</h4><div class="tags"><span class="tag dep">Cloud + Sensors</span><span class="tag price">quote-based</span><span class="tag">makes Nessus</span></div></div><div class="badge-score" style="color:var(--dim)">7.6<small>FIT</small></div></div>
+        <p class="pos">The in-family successor to what you run today — Tenable is the Nessus vendor. Fast scans, SPA + API support, and it slots straight into Tenable One / Nessus workflows, so migration friction is lowest here.</p>
+        <div class="lines">
+          <div class="ln edge"><span class="lbl">EDGE</span><span>Lowest switching cost from Nessus WAS · fast · clean dashboards · unified with your existing VM.</span></div>
+          <div class="ln watch"><span class="lbl">WATCH</span><span>You asked to move to something "better" — this is the incremental, not the leap. App-testing depth is mid-pack.</span></div>
+          <div class="ln fit"><span class="lbl">FIT</span><span>If continuity &amp; consolidation beat best-of-breed.</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grp-label">AI-native / API-first (your "new tools")</div>
+    <div class="cards">
+      <div class="card hl">
+        <div class="top"><div><h4>Escape</h4><div class="tags"><span class="tag dep">Cloud SaaS</span><span class="tag price">quote-based</span><span class="tag">GraphQL</span></div></div><div class="badge-score">8.2<small>FIT</small></div></div>
+        <p class="pos">API-first DAST that leads on GraphQL and business-logic testing (BOLA, IDOR, broken access control) — the exact classes legacy scanners handle weakly. Discovers APIs, tests Kubernetes/microservices, and runs in CI with remediation snippets.</p>
+        <div class="lines">
+          <div class="ln edge"><span class="lbl">EDGE</span><span>Best-in-class GraphQL &amp; API logic testing · K8s/microservice aware · low false positives · fast to onboard.</span></div>
+          <div class="ln watch"><span class="lbl">WATCH</span><span>Cloud SaaS-centric (internal targets via a repeater); newer/smaller than the incumbents.</span></div>
+          <div class="ln fit"><span class="lbl">FIT</span><span>Directly aligned to your Apollo Router / GraphQL federation roadmap — run as the API-security layer.</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="top"><div><h4>Bright Security</h4><div class="tags"><span class="tag dep">Cloud + Repeater</span><span class="tag price">quote / free tier</span></div></div><div class="badge-score" style="color:var(--dim)">8.2<small>FIT</small></div></div>
+        <p class="pos">Developer-centric DAST engineered for very low false positives (vendor cites &lt;3%) with automated remediation loops. Broad API coverage — REST, GraphQL, gRPC, SOAP — plus emerging LLM/prompt-injection tests.</p>
+        <div class="lines">
+          <div class="ln edge"><span class="lbl">EDGE</span><span>Low-FP by design · PR-level automation · GraphQL/gRPC · LLM app testing · business-logic detection.</span></div>
+          <div class="ln watch"><span class="lbl">WATCH</span><span>Optimised for shift-left CI use; classic wide-portfolio scheduled scanning is less its centre of gravity.</span></div>
+          <div class="ln fit"><span class="lbl">FIT</span><span>Strong Escape alternative if you want deep dev-workflow integration.</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="top"><div><h4>StackHawk</h4><div class="tags"><span class="tag dep">CI-native</span><span class="tag price">~$42/contrib/mo</span><span class="tag">free dev tier</span></div></div><div class="badge-score" style="color:var(--dim)">7.9<small>FIT</small></div></div>
+        <p class="pos">The most CI-native option — scans are configured as code (<span class="mono">stackhawk.yml</span>) and run inside GitHub Actions / Jenkins on every PR. Discovers APIs from source, generates OpenAPI specs, and fails the build on policy breach.</p>
+        <div class="lines">
+          <div class="ln edge"><span class="lbl">EDGE</span><span>Best pipeline integration · scanner runs in your own containers · cheap per-contributor · dev-owned.</span></div>
+          <div class="ln watch"><span class="lbl">WATCH</span><span>API/pipeline-first; less suited as a standalone, breadth-first portfolio scanner for a security team.</span></div>
+          <div class="ln fit"><span class="lbl">FIT</span><span>Shift-left: hand ownership to dev teams while security sets policy.</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="top"><div><h4 style="font-size:1rem;color:var(--dim)">Note on "AI" claims</h4></div></div>
+        <p class="pos" style="margin-top:6px">Every vendor now markets AI. What actually matters for your goal: (1) <b>fewer false positives</b> via validated/proof-based findings, (2) <b>API &amp; GraphQL schema understanding</b>, and (3) <b>usable remediation guidance</b>. Escape, Bright and StackHawk are genuinely API/AI-native; Invicti, Acunetix and HCL bolt strong AI onto mature engines. Judge on the FP rate and GraphQL depth in a proof-of-value, not the marketing.</p>
+      </div>
+    </div>
+
+    <div class="grp-label">Open source</div>
+    <div class="cards">
+      <div class="card">
+        <div class="top"><div><h4>OWASP ZAP</h4><div class="tags"><span class="tag dep">Self-host</span><span class="tag price">free + labour</span><span class="tag">Checkmarx-backed</span></div></div><div class="badge-score" style="color:var(--dim)">7.2<small>FIT</small></div></div>
+        <p class="pos">The correct open-source web DAST — actively maintained (~14k GitHub stars), automation framework, Docker-friendly, full API. This is the free tool for the job, <b>not OpenVAS</b>.</p>
+        <div class="lines">
+          <div class="ln edge"><span class="lbl">EDGE</span><span>Zero licence cost · scriptable/CI-friendly · huge community · self-hosted control.</span></div>
+          <div class="ln watch"><span class="lbl">WATCH</span><span>Higher false positives &amp; real labour: budget ~40–200 hrs setup + 20–80 hrs/yr triage. "Free" ≠ cheap.</span></div>
+          <div class="ln fit"><span class="lbl">FIT</span><span>Augment CI, pilot before buying, or scan low-risk internal apps.</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="top"><div><h4 style="color:var(--dim)">OpenVAS / Greenbone</h4><div class="tags"><span class="tag" style="border-color:rgba(212,87,78,.35);color:#e28880">Wrong lane for WAS</span></div></div></div>
+        <p class="pos" style="margin-top:6px">Keep it — but as <b>network/host CVE scanning</b>, not web-app DAST. It scans servers, services and ports against a 185k+ CVE feed. It won't crawl your apps, follow auth flows, or test your GraphQL/REST logic the way WAS did. Community Edition is free; Greenbone Enterprise appliances start around $5k/yr.</p>
+        <div class="lines">
+          <div class="ln fit"><span class="lbl">FIT</span><span>Infra vulnerability hygiene alongside — not instead of — a real DAST.</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== 5. VERDICT ===================== -->
+<section id="verdict">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">05</span><h2>Recommendation</h2></div>
+
+    <div class="verdict-block">
+      <div class="vk">Primary recommendation</div>
+      <h3>Lead with <span>Invicti</span>, layer <span>Escape</span> for APIs</h3>
+      <p><b>Invicti</b> is the cleanest upgrade from Nessus WAS for automated web-asset scanning: proof-based scanning removes the false-positive triage that quietly kills most scanning programmes, it covers REST/SOAP/gRPC/GraphQL and SPAs, scales across a large app portfolio with RBAC, and — critically for a security-conscious shop — runs on-prem or hybrid, not cloud-only.</p>
+      <p>Because your architecture is moving toward <b>Apollo Router / GraphQL federation</b> behind APISIX, add <b>Escape</b> as the API/GraphQL-security layer (or shortlist it head-to-head with Invicti's API module in your proof-of-value). GraphQL introspection abuse and business-logic flaws (BOLA/IDOR) are exactly where a generic DAST is weakest and where Escape is strongest.</p>
+    </div>
+
+    <div class="decide">
+      <div class="drow gold">
+        <div class="cond"><b>Default:</b> broad automated coverage, security-team owned, on-prem option, minimal false positives</div>
+        <div class="arr">→</div>
+        <div class="pick">Invicti<span class="why">+ Escape for API/GraphQL depth</span></div>
+      </div>
+      <div class="drow">
+        <div class="cond"><b>Budget is the constraint</b> and one team owns scanning</div>
+        <div class="arr">→</div>
+        <div class="pick">Acunetix<span class="why">same engine, watch the 2-yr / per-target terms</span></div>
+      </div>
+      <div class="drow">
+        <div class="cond"><b>You want dev teams to own it</b> in CI/CD, shift-left, config-as-code</div>
+        <div class="arr">→</div>
+        <div class="pick">StackHawk<span class="why">or Bright for low-FP + PR automation</span></div>
+      </div>
+      <div class="drow">
+        <div class="cond"><b>Air-gapped / FIPS / federal</b> mandate, or you want one platform for DAST+SAST+IAST+SCA</div>
+        <div class="arr">→</div>
+        <div class="pick">HCL AppScan<span class="why">AppScan 360° on-prem</span></div>
+      </div>
+      <div class="drow">
+        <div class="cond"><b>Continuity beats best-of-breed</b> — stay in the Tenable/Nessus family</div>
+        <div class="arr">→</div>
+        <div class="pick">Tenable WAS<span class="why">lowest migration friction</span></div>
+      </div>
+      <div class="drow">
+        <div class="cond"><b>Zero licence budget</b> / pilot first / augment CI</div>
+        <div class="arr">→</div>
+        <div class="pick">OWASP ZAP<span class="why">budget the labour, not the licence</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== 6. PROGRAM ===================== -->
+<section id="program">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">06</span><h2>Design the programme, not just the purchase</h2></div>
+    <p class="sec-intro">A tool is one layer. No DAST reliably catches business-logic flaws, complex authorization bugs, or race conditions — that gap is closed by people, not scanners. Build the buy into a repeatable programme:</p>
+
+    <div class="prog">
+      <div class="pcard">
+        <div class="st">LAYER 01</div>
+        <h4>Automated DAST engine</h4>
+        <p><b>Invicti</b> (or your chosen leader) as the always-on scanner. Continuous/weekly for internet-facing assets; configure authenticated scans through <b>Keycloak (OIDC)</b> so it reaches protected areas, not just the login page.</p>
+      </div>
+      <div class="pcard">
+        <div class="st">LAYER 02</div>
+        <h4>API &amp; GraphQL testing</h4>
+        <p>Feed <b>OpenAPI / GraphQL schemas</b> to the scanner (or <b>Escape</b>) so coverage follows your APISIX-fronted, federated graph — not just the HTML surface. This is where your roadmap concentrates risk.</p>
+      </div>
+      <div class="pcard">
+        <div class="st">LAYER 03</div>
+        <h4>Shift-left in CI/CD</h4>
+        <p>Wire scans into pipelines (native for StackHawk/Escape/Bright; container/CLI for Invicti/Burp EE) to catch regressions per-release. Gate builds on new criticals, not on the full backlog.</p>
+      </div>
+      <div class="pcard">
+        <div class="st">LAYER 04</div>
+        <h4>Human validation</h4>
+        <p>Use <b>Core Impact</b> or an annual third-party pentest (Burp Pro in expert hands) to validate exploitability and hunt logic/authz flaws. Keep <b>OpenVAS</b> for infra CVE hygiene. Scanners find; humans confirm.</p>
+      </div>
+    </div>
+
+    <div class="stack-note">
+      <b>For your environment specifically:</b> validate three things in any proof-of-value before signing — (1) authenticated scanning works cleanly against a <b>Keycloak/OIDC</b> flow; (2) the scanner ingests your <b>GraphQL schema</b> and finds introspection/BOLA issues behind <b>APISIX</b>; (3) it deploys where your policy needs it (on-prem/hybrid for internal K8s services). Run the top two candidates against the <em>same</em> two real apps and compare confirmed findings vs. false positives — that head-to-head, not the datasheet, is what should decide it.
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p class="note"><b>Methodology &amp; caveats.</b> Composite and per-criterion scores are this briefing's analyst judgement, weighted for automated web-asset DAST in your stated environment — they are not a controlled benchmark (for measured detection rates, see the OWASP Benchmark / WAVSEP projects and run your own proof-of-value). Pricing figures are indicative market ranges from public aggregators and marketplace listings; most enterprise DAST is quote-based and moves with target/app count, deployment model and contract term, so treat all numbers as directional and confirm via vendor quote. Vendor category and capability data drawn from the CyberSecTools dataset and vendor documentation as of July 2026.</p>
+    <div class="src">
+      <span>SOURCES:</span><span>CyberSecTools</span><span>·</span><span>vendor documentation</span><span>·</span><span>OWASP</span><span>·</span><span>Greenbone</span><span>·</span><span>PortSwigger</span><span>·</span><span>public pricing aggregators (2026)</span>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
